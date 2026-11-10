@@ -22,7 +22,6 @@ import (
 	"geekai/service/moderation"
 	"geekai/service/oss"
 	"geekai/service/payment"
-	"geekai/service/ppt"
 	"geekai/service/sms"
 	"geekai/service/sora"
 	"geekai/service/suno"
@@ -135,13 +134,6 @@ func main() {
 		fx.Provide(handler.NewSmsHandler),
 		fx.Provide(handler.NewRedeemHandler),
 		fx.Provide(handler.NewCaptchaHandler),
-		fx.Provide(func(db *gorm.DB, userService *service.UserService, uploadManager *oss.UploaderManager) *ppt.PptService {
-			return ppt.NewPptService(db, userService, uploadManager)
-		}),
-		fx.Provide(handler.NewPPTTaskHandler),
-		fx.Invoke(func(ppt *ppt.PptService) {
-			ppt.RecoverStaleProcessingTasks()
-		}),
 		fx.Provide(handler.NewMidJourneyHandler),
 		fx.Provide(handler.NewChatModelHandler),
 		fx.Provide(handler.NewPaymentHandler),
@@ -172,7 +164,6 @@ func main() {
 		fx.Provide(admin.NewAdminJimengHandler),
 		fx.Provide(admin.NewVideoHandler),
 		fx.Provide(admin.NewSunoHandler),
-		fx.Provide(admin.NewPPTHandler),
 
 		// 邮件服务
 		fx.Provide(service.NewSmtpService),
@@ -270,9 +261,6 @@ func main() {
 			h.RegisterRoutes()
 		}),
 		fx.Invoke(func(s *core.AppServer, h *handler.CaptchaHandler) {
-			h.RegisterRoutes()
-		}),
-		fx.Invoke(func(s *core.AppServer, h *handler.PPTTaskHandler) {
 			h.RegisterRoutes()
 		}),
 		fx.Invoke(func(s *core.AppServer, h *handler.RedeemHandler) {
@@ -395,9 +383,6 @@ func main() {
 			h.RegisterRoutes()
 		}),
 		fx.Invoke(func(s *core.AppServer, h *admin.SunoHandler) {
-			h.RegisterRoutes()
-		}),
-		fx.Invoke(func(s *core.AppServer, h *admin.PPTHandler) {
 			h.RegisterRoutes()
 		}),
 		fx.Provide(admin.NewChatAppTypeHandler),

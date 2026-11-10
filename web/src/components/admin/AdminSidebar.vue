@@ -200,24 +200,6 @@ const items = [
     ],
   },
   {
-    icon: 'ppt',
-    title: 'AIPPT',
-    index: '/admin/ppt',
-    subs: [
-      {
-        icon: 'config',
-        index: '/admin/ppt/config',
-        title: 'PPT 生成配置',
-      },
-      {
-        icon: 'list',
-        index: '/admin/ppt/jobs',
-        title: 'PPT 任务列表',
-      },
-    ],
-  },
-
-  {
     icon: 'moderation',
     index: '/admin/config/moderation',
     title: '文本审查',

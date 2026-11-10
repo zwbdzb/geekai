@@ -76,12 +76,6 @@ const homeRoutes = {
       component: () => import('@/views/Image.vue'),
     },
     {
-      name: 'ppt',
-      path: '/ppt',
-      meta: { title: 'PPT 生成' },
-      component: () => import('@/views/PPTCreate.vue'),
-    },
-    {
       name: 'suno',
       path: '/suno',
       meta: { title: 'Suno音乐创作' },
@@ -344,18 +338,6 @@ const routes = [
         name: 'admin-video-config',
         meta: { title: '视频生成配置' },
         component: () => import('@/views/admin/video/VideoConfig.vue'),
-      },
-      {
-        path: '/admin/ppt/config',
-        name: 'admin-ppt-config',
-        meta: { title: 'PPT 生成配置' },
-        component: () => import('@/views/admin/settings/PPTConfig.vue'),
-      },
-      {
-        path: '/admin/ppt/jobs',
-        name: 'admin-ppt-jobs',
-        meta: { title: 'PPT 任务列表' },
-        component: () => import('@/views/admin/ppt/PPTJobs.vue'),
       },
       {
         path: '/admin/powerLog',

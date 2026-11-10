@@ -119,5 +119,4 @@ const (
 	ConfigKeyAI3D       = "ai3d"        // AI3D 配置
 	ConfigKeyJimeng     = "jimeng"      // 即梦AI配置
 	ConfigKeyVideo      = "video"       // 视频生成配置
-	ConfigKeyPPT        = "ppt"         // PPT 生成配置
 )

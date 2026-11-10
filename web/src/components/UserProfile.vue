@@ -30,13 +30,13 @@
           </el-tooltip>
         </div>
       </el-form-item>
-      <el-form-item label="剩余算力">
+      <el-form-item label="剩余积分">
         <el-text type="warning">{{ user['power'] }}</el-text>
         <el-tag type="info" size="small" class="ml-2 cursor-pointer" @click="gotoLog"
-          >算力日志</el-tag
+          >积分日志</el-tag
         >
         <el-tooltip
-          :content="`每日签到可获得 ${systemConfig.daily_power} 算力`"
+          :content="`每日签到可获得 ${systemConfig.daily_power} 积分`"
           placement="top"
           v-if="systemConfig.daily_power > 0"
         >

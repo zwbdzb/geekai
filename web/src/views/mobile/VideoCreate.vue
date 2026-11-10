@@ -46,13 +46,13 @@
           @price-params-change="handlePriceParamsChange"
         />
 
-        <!-- 算力信息 -->
+        <!-- 积分信息 -->
         <div
           class="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 shadow-sm"
         >
           <div class="flex items-center space-x-2">
             <i class="iconfont icon-lightning text-yellow-500 !text-xl"></i>
-            <span class="font-medium text-gray-700">当前可用算力：</span>
+            <span class="font-medium text-gray-700">当前可用积分：</span>
             <span class="font-bold text-lg text-yellow-500">{{ store.availablePower }}</span>
           </div>
         </div>
@@ -67,7 +67,7 @@
           >
             <i v-if="store.submitting" class="iconfont icon-loading animate-spin"></i>
             <i v-else class="iconfont icon-chuangzuo"></i>
-            <span>立即生成 ({{ store.currentPowerCost }}算力)</span>
+            <span>立即生成 ({{ store.currentPowerCost }}积分)</span>
           </button>
         </div>
       </div>
@@ -231,7 +231,7 @@
                   v-if="item.power"
                   class="px-2 py-1 text-xs bg-orange-100 text-orange-600 rounded-full"
                 >
-                  消耗算力：{{ item.power }}
+                  消耗积分：{{ item.power }}
                 </span>
               </div>
               <div v-if="item.status === 'failed'" class="mt-2 text-sm text-red-600">
@@ -360,7 +360,7 @@ const providerOrder = computed(() =>
 // 处理价格参数变化事件
 const handlePriceParamsChange = () => {
   // 价格参数变化时，store 中的 watch 会自动触发 setCurrentPowerCost
-  // setCurrentPowerCost 是异步的，会调用 API 获取最新算力值
+  // setCurrentPowerCost 是异步的，会调用 API 获取最新积分值
   // 无需额外处理，watch 会自动更新 currentPowerCost
 }
 

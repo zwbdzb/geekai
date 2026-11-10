@@ -8,7 +8,7 @@
         </div>
         <div class="header-content">
           <h2 class="invite-title">邀请好友获得奖励</h2>
-          <p class="invite-desc">邀请好友注册即可获得算力奖励</p>
+          <p class="invite-desc">邀请好友注册即可获得积分奖励</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@
             </div>
             <div class="rule-reward">
               <span class="reward-value">+{{ rule.reward }}</span>
-              <span class="reward-unit">算力</span>
+              <span class="reward-unit">积分</span>
             </div>
           </div>
         </div>

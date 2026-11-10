@@ -13,7 +13,7 @@
         </el-table-column>
         <el-table-column prop="subject" label="产品名称" />
         <el-table-column prop="amount" label="订单金额" />
-        <el-table-column label="订单算力">
+        <el-table-column label="订单积分">
           <template #default="scope">
             <span>{{ scope.row.remark && scope.row.remark.power }}</span>
           </template>
@@ -52,7 +52,7 @@
             <span class="value amount">￥{{ item.amount }}</span>
           </div>
           <div class="info-row">
-            <span class="label">订单算力：</span>
+            <span class="label">订单积分：</span>
             <span class="value">{{ (item.remark && item.remark.power) || '-' }}</span>
           </div>
           <div class="info-row">

@@ -578,7 +578,7 @@ const selectModel = (model) => {
   _newChat()
 }
 
-// 根据算力获取标签类型
+// 根据积分获取标签类型
 const getTagType = (power) => {
   const powerNum = Number(power)
   if (powerNum <= 5) return 'info'

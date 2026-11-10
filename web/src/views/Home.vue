@@ -72,7 +72,7 @@
                 <li>
                   <div @click="showPowerLogDialog = true" class="flex">
                     <i class="iconfont icon-list"></i>
-                    <span class="title">算力日志</span>
+                    <span class="title">积分日志</span>
                   </div>
                 </li>
                 <li>
@@ -133,10 +133,10 @@
         </router-view>
       </div>
     </el-scrollbar>
-    <!-- 算力日志弹窗 -->
+    <!-- 积分日志弹窗 -->
     <el-dialog
       v-model="showPowerLogDialog"
-      title="算力日志"
+      title="积分日志"
       width="90%"
       :close-on-click-modal="true"
       :close-on-press-escape="true"

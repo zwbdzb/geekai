@@ -9,20 +9,20 @@
         :rules="rules"
       >
         <div>
-          <el-form-item label="注册赠送算力" prop="init_power">
-            <el-input v-model.number="system['init_power']" placeholder="新用户注册赠送算力" />
+          <el-form-item label="注册赠送积分" prop="init_power">
+            <el-input v-model.number="system['init_power']" placeholder="新用户注册赠送积分" />
           </el-form-item>
-          <el-form-item label="邀请赠送算力" prop="invite_power">
+          <el-form-item label="邀请赠送积分" prop="invite_power">
             <el-input
               v-model.number="system['invite_power']"
-              placeholder="邀请新用户注册赠送算力"
+              placeholder="邀请新用户注册赠送积分"
             />
           </el-form-item>
           <el-form-item>
             <template #label>
               <div class="label-title">
-                签到赠送算力
-                <el-tooltip effect="dark" content="每日签到赠送算力" raw-content placement="right">
+                签到赠送积分
+                <el-tooltip effect="dark" content="每日签到赠送积分" raw-content placement="right">
                   <el-icon>
                     <InfoFilled />
                   </el-icon>
@@ -34,10 +34,10 @@
           <el-form-item>
             <template #label>
               <div class="label-title">
-                MJ绘图算力
+                MJ绘图积分
                 <el-tooltip
                   effect="dark"
-                  content="使用MidJourney画一张图消耗算力"
+                  content="使用MidJourney画一张图消耗积分"
                   raw-content
                   placement="right"
                 >
@@ -52,51 +52,51 @@
           <el-form-item>
             <template #label>
               <div class="label-title">
-                MJ 放大（Upscale）算力
-                <el-tooltip effect="dark" content="MJ 放大、变换（V1-V4）操作消耗算力" raw-content placement="right">
+                MJ 放大（Upscale）积分
+                <el-tooltip effect="dark" content="MJ 放大、变换（V1-V4）操作消耗积分" raw-content placement="right">
                   <el-icon><InfoFilled /></el-icon>
                 </el-tooltip>
               </div>
             </template>
-            <el-input v-model.number="system['mj_upscale_power']" placeholder="未配置时使用 MJ 操作算力" />
+            <el-input v-model.number="system['mj_upscale_power']" placeholder="未配置时使用 MJ 操作积分" />
           </el-form-item>
           <el-form-item>
             <template #label>
               <div class="label-title">
-                MJ 混合（Blend）算力
-                <el-tooltip effect="dark" content="MJ 融图操作消耗算力" raw-content placement="right">
+                MJ 混合（Blend）积分
+                <el-tooltip effect="dark" content="MJ 融图操作消耗积分" raw-content placement="right">
                   <el-icon><InfoFilled /></el-icon>
                 </el-tooltip>
               </div>
             </template>
-            <el-input v-model.number="system['mj_blend_power']" placeholder="未配置时使用 MJ 操作算力" />
+            <el-input v-model.number="system['mj_blend_power']" placeholder="未配置时使用 MJ 操作积分" />
           </el-form-item>
           <el-form-item>
             <template #label>
               <div class="label-title">
-                MJ 换脸算力
-                <el-tooltip effect="dark" content="MJ 换脸操作消耗算力" raw-content placement="right">
+                MJ 换脸积分
+                <el-tooltip effect="dark" content="MJ 换脸操作消耗积分" raw-content placement="right">
                   <el-icon><InfoFilled /></el-icon>
                 </el-tooltip>
               </div>
             </template>
-            <el-input v-model.number="system['mj_swap_face_power']" placeholder="未配置时使用 MJ 操作算力" />
+            <el-input v-model.number="system['mj_swap_face_power']" placeholder="未配置时使用 MJ 操作积分" />
           </el-form-item>
           <el-form-item>
             <template #label>
               <div class="label-title">
-                MJ 局部重绘算力
-                <el-tooltip effect="dark" content="MJ 局部重绘（Inpaint）操作消耗算力" raw-content placement="right">
+                MJ 局部重绘积分
+                <el-tooltip effect="dark" content="MJ 局部重绘（Inpaint）操作消耗积分" raw-content placement="right">
                   <el-icon><InfoFilled /></el-icon>
                 </el-tooltip>
               </div>
             </template>
-            <el-input v-model.number="system['mj_modal_power']" placeholder="未配置时使用 MJ 操作算力" />
+            <el-input v-model.number="system['mj_modal_power']" placeholder="未配置时使用 MJ 操作积分" />
           </el-form-item>
           <el-form-item>
             <template #label>
               <div class="label-title">
-                MJ 操作算力（回退默认值）
+                MJ 操作积分（回退默认值）
                 <el-tooltip effect="dark" content="上述 MJ 分项未配置时使用的默认值" raw-content placement="right">
                   <el-icon><InfoFilled /></el-icon>
                 </el-tooltip>
@@ -105,10 +105,10 @@
             <el-input v-model.number="system['mj_action_power']" placeholder="" />
           </el-form-item>
 
-          <el-form-item label="Suno 算力" prop="suno_power">
+          <el-form-item label="Suno 积分" prop="suno_power">
             <el-input
               v-model.number="system['suno_power']"
-              placeholder="使用 Suno 生成一首音乐消耗算力"
+              placeholder="使用 Suno 生成一首音乐消耗积分"
             />
           </el-form-item>
         </div>

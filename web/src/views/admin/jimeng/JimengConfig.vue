@@ -80,7 +80,7 @@
           </el-form-item>
         </div>
         <el-divider />
-        <!-- 算力配置分组 -->
+        <!-- 积分配置分组 -->
         <div class="mb-3">
           <h3 class="heading-3 mb-3">任务积分配置</h3>
           <Alert type="info" class="mb-3">

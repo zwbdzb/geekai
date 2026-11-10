@@ -64,7 +64,7 @@ export const useVideoStore = defineStore('video', () => {
   const taskPulling = ref(true)
   const keLingPowers = ref({})
 
-  // 监听器：当可灵参数变化时更新算力
+  // 监听器：当可灵参数变化时更新积分
   watch(
     () => [kelingParams.model, kelingParams.mode, kelingParams.duration],
     () => {
@@ -75,7 +75,7 @@ export const useVideoStore = defineStore('video', () => {
 
   // 方法
   const updateModelPower = () => {
-    // 根据模型、模式、时长计算算力消耗
+    // 根据模型、模式、时长计算积分消耗
     const key = `${kelingParams.model}_${kelingParams.mode}_${kelingParams.duration}`
     kelingPowerCost.value = keLingPowers.value[key] || 10
   }
@@ -87,7 +87,7 @@ export const useVideoStore = defineStore('video', () => {
     { deep: true }
   )
 
-  // 监听器：当可灵参数变化时更新算力
+  // 监听器：当可灵参数变化时更新积分
   watch(
     () => [kelingParams.model, kelingParams.mode, kelingParams.duration],
     () => {
@@ -274,13 +274,13 @@ export const useVideoStore = defineStore('video', () => {
   }
   const fetchUserPower = async () => {
     try {
-      // 获取系统信息，更新算力配置
+      // 获取系统信息，更新积分配置
       const sysInfo = await getSystemInfo()
       lumaPowerCost.value = sysInfo.data.luma_power || 10
       keLingPowers.value = sysInfo.data.keling_powers || {}
       updateModelPower()
     } catch (error) {
-      console.error('获取用户算力失败:', error)
+      console.error('获取用户积分失败:', error)
       // 设置默认值
       lumaPowerCost.value = 10
       kelingPowerCost.value = 15

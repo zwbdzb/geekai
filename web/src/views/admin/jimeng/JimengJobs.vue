@@ -120,7 +120,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="power" label="算力" width="80" />
+        <el-table-column prop="power" label="积分" width="80" />
         <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.created_at) }}
@@ -170,7 +170,7 @@
               {{ getStatusName(detailDialog.data.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="算力消耗">{{
+          <el-descriptions-item label="积分消耗">{{
             detailDialog.data.power
           }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{

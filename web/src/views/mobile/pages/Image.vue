@@ -64,7 +64,7 @@
             >
               <i v-if="loading" class="iconfont icon-loading animate-spin"></i>
               <i v-else class="iconfont icon-chuangzuo"></i>
-              <span>{{ loading ? '创作中...' : '立即生成' }}({{ imagePower }}算力)</span>
+              <span>{{ loading ? '创作中...' : '立即生成' }}({{ imagePower }}积分)</span>
             </button>
           </div>
         </van-cell-group>
@@ -186,7 +186,7 @@
       <div class="detail-content" v-if="currentDetail">
         <van-cell title="提示词" :label="currentDetail.prompt || '-'" />
         <van-cell title="生图模型" :value="currentDetail.params?.model_name || '-'" />
-        <van-cell title="消耗算力" :value="currentDetail.power || 0" />
+        <van-cell title="消耗积分" :value="currentDetail.power || 0" />
         <van-cell title="图片比例" :value="currentDetail.params?.aspect_ratio || '-'" />
         <van-cell title="图片尺寸" :value="currentDetail.params?.size || '-'" />
         <van-cell title="创建时间" :value="formatTime(currentDetail.created_at)" />
@@ -331,7 +331,7 @@ const allowPulling = ref(true) // 是否允许轮询
 const tastPullHandler = ref(null)
 const router = useRouter()
 const power = ref(0)
-const imagePower = ref(0) // 画一张图片消耗算力
+const imagePower = ref(0) // 画一张图片消耗积分
 
 const userId = ref(0)
 const store = useSharedStore()

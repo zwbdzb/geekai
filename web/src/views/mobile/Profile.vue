@@ -10,7 +10,7 @@
           <div class="user-details">
             <h2 class="username">{{ form.nickname || form.username }}</h2>
             <div class="user-meta">
-              <van-tag type="info">剩余算力：{{ form.power || 0 }}</van-tag>
+              <van-tag type="info">剩余积分：{{ form.power || 0 }}</van-tag>
               <span class="user-id">ID: {{ form.id }}</span>
             </div>
           </div>

@@ -110,13 +110,13 @@
           <el-input v-model="item.tag" autocomplete="off" />
         </el-form-item>
 
-        <el-form-item label="消耗算力：" prop="power">
+        <el-form-item label="消耗积分：" prop="power">
           <template #label>
             <div class="flex items-center">
-              <span class="mr-1">消耗算力</span>
+              <span class="mr-1">消耗积分</span>
             </div>
           </template>
-          <el-input v-model.number="item.power" autocomplete="off" placeholder="消耗算力" />
+          <el-input v-model.number="item.power" autocomplete="off" placeholder="消耗积分" />
         </el-form-item>
 
         <div v-if="item.type === 'chat'">
@@ -247,7 +247,7 @@ const rules = reactive({
   type: [{ required: true, message: '请选择模型类型', trigger: 'change' }],
   name: [{ required: true, message: '请输入模型名称', trigger: 'change' }],
   value: [{ required: true, message: '请输入模型值', trigger: 'change' }],
-  power: [{ required: true, message: '请输入消耗算力', trigger: 'change' }],
+  power: [{ required: true, message: '请输入消耗积分', trigger: 'change' }],
 })
 const loading = ref(true)
 const formRef = ref(null)

@@ -197,7 +197,7 @@
         >
           <i v-if="suno.loading" class="iconfont icon-loading animate-spin"></i>
           <i v-else class="iconfont icon-chuangzuo"></i>
-          <span>{{ suno.loading ? '创作中...' : suno.btnText }}({{ suno.sunoPowerCost }}算力)</span>
+          <span>{{ suno.loading ? '创作中...' : suno.btnText }}({{ suno.sunoPowerCost }}积分)</span>
         </button>
       </div>
 

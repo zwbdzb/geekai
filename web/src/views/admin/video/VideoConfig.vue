@@ -35,9 +35,9 @@
           </el-form-item>
         </div>
         <el-divider />
-        <!-- 算力配置分组 -->
+        <!-- 积分配置分组 -->
         <div class="mb-3">
-          <h3 class="heading-3 mb-3">模型算力配置</h3>
+          <h3 class="heading-3 mb-3">模型积分配置</h3>
           <Alert type="info" class="mb-3">
             <div class="text-gray-500">
               根据模型的 priceParams
@@ -89,7 +89,7 @@
                     <el-input-number
                       v-model="getModelConfig(model.key).power_config[priceKey]"
                       :min="1"
-                      :placeholder="`请输入${getPriceKeyLabel(priceKey, model)}的算力消耗`"
+                      :placeholder="`请输入${getPriceKeyLabel(priceKey, model)}的积分消耗`"
                       size="small"
                       class="w-full"
                     />
@@ -268,7 +268,7 @@ const generatePriceKeys = (model) => {
 // 生成价格 key 的显示标签
 const getPriceKeyLabel = (priceKey, model) => {
   if (priceKey === 'fixed') {
-    return '固定价格（算力）'
+    return '固定价格（积分）'
   }
 
   if (!model.priceParams || model.priceParams.length === 0) {

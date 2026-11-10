@@ -15,7 +15,7 @@
               会员中心
             </h1>
             <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              升级算力套餐，让创作效率持续提升
+              升级积分套餐，让创作效率持续提升
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@
           <div class="mb-6">
             <h2 class="m-0 text-lg font-bold text-slate-900 dark:text-slate-100">精选套餐</h2>
             <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-              多档算力套餐覆盖高频使用场景，灵活支付立即生效。
+              多档积分套餐覆盖高频使用场景，灵活支付立即生效。
             </p>
           </div>
 
@@ -147,7 +147,7 @@
                     {{ item.name }}
                   </h3>
                   <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                    算力值：{{ item.power }}
+                    积分值：{{ item.power }}
                   </p>
                 </div>
               </div>

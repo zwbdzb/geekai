@@ -40,7 +40,7 @@
             </div>
             <div class="card-info">
               <div class="card-number">{{ formatNumber(stats.power || stats.tokens) }}</div>
-              <div class="card-label">算力消耗</div>
+              <div class="card-label">积分消耗</div>
               <div class="card-desc">今日: {{ formatNumber(stats.todayPower || stats.todayTokens) }}</div>
             </div>
           </div>

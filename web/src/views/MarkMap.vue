@@ -31,7 +31,7 @@
                       style="margin-left: 5px; position: relative; top: -2px"
                       type="info"
                       size="small"
-                      >{{ item.power }}算力
+                      >{{ item.power }}积分
                     </el-tag>
                   </el-option>
                 </el-select>
@@ -39,7 +39,7 @@
 
               <div class="text-info">
                 <el-text type="primary"
-                  >当前可用算力：<el-text type="warning">{{ loginUser.power }}</el-text></el-text
+                  >当前可用积分：<el-text type="warning">{{ loginUser.power }}</el-text></el-text
                 >
               </div>
 

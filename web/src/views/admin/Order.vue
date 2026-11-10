@@ -30,7 +30,7 @@
         <el-table-column prop="username" label="下单用户" />
         <el-table-column prop="subject" label="产品名称" />
         <el-table-column prop="amount" label="订单金额" />
-        <el-table-column label="充值算力">
+        <el-table-column label="充值积分">
           <template #default="scope">
             <span>{{ scope.row.remark?.power }}</span>
           </template>

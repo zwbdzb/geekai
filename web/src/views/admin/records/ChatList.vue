@@ -44,7 +44,7 @@
             <el-table-column prop="model" label="模型" />
             <el-table-column prop="title" label="标题" />
             <el-table-column prop="msg_num" label="消息数量" />
-            <el-table-column prop="token" label="消耗算力" />
+            <el-table-column prop="token" label="消耗积分" />
 
             <el-table-column label="创建时间">
               <template #default="scope">
@@ -131,7 +131,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="token" label="算力" />
+            <el-table-column prop="token" label="积分" />
 
             <el-table-column label="创建时间">
               <template #default="scope">

@@ -16,7 +16,7 @@
         </el-table-column>
         <el-table-column prop="price" label="商品价格" />
         <el-table-column prop="stripe_price" label="Stripe 价格(USD)" />
-        <el-table-column prop="power" label="算力" />
+        <el-table-column prop="power" label="积分" />
         <el-table-column prop="sales" label="销量" />
         <el-table-column prop="enabled" label="启用状态">
           <template #default="scope">
@@ -57,8 +57,8 @@
           <el-input v-model="item.stripe_price" autocomplete="off" placeholder="Stripe 专用美元价格" />
         </el-form-item>
 
-        <el-form-item label="算力：" prop="power">
-          <el-input v-model.number="item.power" autocomplete="off" placeholder="增加算力值" />
+        <el-form-item label="积分：" prop="power">
+          <el-input v-model.number="item.power" autocomplete="off" placeholder="增加积分值" />
         </el-form-item>
 
         <el-form-item label="启用状态：" prop="enable">

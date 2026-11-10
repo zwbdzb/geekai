@@ -20,7 +20,7 @@
             <van-col :span="8">
               <div class="stat-item">
                 <div class="stat-value">{{ stats.balance }}</div>
-                <div class="stat-label">剩余算力</div>
+                <div class="stat-label">剩余积分</div>
               </div>
             </van-col>
           </van-row>
@@ -60,7 +60,7 @@
                   <span class="cost-value" :class="{ income: item.mark === 1 }">
                     {{ item.mark === 1 ? '+' : '-' }}{{ item.amount }}
                   </span>
-                  <span class="cost-unit">算力</span>
+                  <span class="cost-unit">积分</span>
                 </div>
               </div>
               <div class="log-detail" v-if="item.remark">

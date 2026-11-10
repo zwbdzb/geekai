@@ -45,7 +45,7 @@
             <el-tag v-else>未兑换</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="power" label="算力" />
+        <el-table-column prop="power" label="积分" />
 
         <el-table-column label="生成时间">
           <template #default="scope">
@@ -104,7 +104,7 @@
             <el-input v-model="item.name" autocomplete="off" />
           </el-form-item>
 
-          <el-form-item label="算力额度：" prop="power">
+          <el-form-item label="积分额度：" prop="power">
             <el-input v-model.number="item.power" autocomplete="off" />
           </el-form-item>
 
@@ -167,7 +167,7 @@ onUnmounted(() => {
 })
 
 const add = () => {
-  item.value = { name: '100算力点卡', power: 100, num: 1 }
+  item.value = { name: '100积分点卡', power: 100, num: 1 }
   showDialog.value = true
   dialogLoading.value = false
 }
@@ -177,7 +177,7 @@ const save = () => {
     return showMessageError('请输入兑换码名称')
   }
   if (item.value.power === 0) {
-    return showMessageError('请输入算力额度')
+    return showMessageError('请输入积分额度')
   }
   if (item.value.num <= 0) {
     return showMessageError('请输入生成数量')

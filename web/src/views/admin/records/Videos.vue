@@ -112,7 +112,7 @@
 
             <div class="flex items-center gap-4 text-xs text-gray-600">
               <span>渠道: {{ item.channel }}</span>
-              <span>算力: {{ item.power }}</span>
+              <span>积分: {{ item.power }}</span>
               <span v-if="item.status === 'in_progress'">进度: {{ item.progress }}%</span>
               <span v-if="item.err_msg" class="text-red-600">错误: {{ substr(item.err_msg, 30) }}</span>
             </div>
@@ -183,7 +183,7 @@
             <div class="text-sm font-medium">{{ currentDetail.type }}</div>
           </div>
           <div class="p-3 bg-gray-50 rounded">
-            <div class="text-xs text-gray-500 mb-1">算力消耗</div>
+            <div class="text-xs text-gray-500 mb-1">积分消耗</div>
             <div class="text-sm font-medium">{{ currentDetail.power }}</div>
           </div>
           <div class="p-3 bg-gray-50 rounded">

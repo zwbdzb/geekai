@@ -235,7 +235,7 @@ const items = [
       {
         icon: 'power',
         index: '/admin/config/power',
-        title: '算力配置',
+        title: '积分配置',
       },
 
       {
@@ -305,7 +305,7 @@ const items = [
   {
     icon: 'log',
     index: '/admin/powerLog',
-    title: '用户算力日志',
+    title: '用户积分日志',
   },
   {
     icon: 'log',

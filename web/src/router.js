@@ -162,7 +162,7 @@ const routes = [
       {
         path: '/admin/config/power',
         name: 'admin-config-power',
-        meta: { title: '算力配置' },
+        meta: { title: '积分配置' },
         component: () => import('@/views/admin/settings/PowerConfig.vue'),
       },
       {
@@ -342,7 +342,7 @@ const routes = [
       {
         path: '/admin/powerLog',
         name: 'admin-power-log',
-        meta: { title: '算力日志' },
+        meta: { title: '积分日志' },
         component: () => import('@/views/admin/PowerLog.vue'),
       },
       {

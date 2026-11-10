@@ -43,7 +43,7 @@
         <el-table-column prop="mobile" label="手机" />
         <el-table-column prop="email" label="邮箱" />
         <el-table-column prop="nickname" label="昵称" />
-        <el-table-column prop="power" label="剩余算力" />
+        <el-table-column prop="power" label="剩余积分" />
         <el-table-column label="状态" width="80">
           <template #default="scope">
             <el-tag v-if="scope.row.status" type="success">正常</el-tag>
@@ -130,7 +130,7 @@
             placeholder="8-16位"
           />
         </el-form-item>
-        <el-form-item label="剩余算力：" prop="power">
+        <el-form-item label="剩余积分：" prop="power">
           <el-input v-model.number="user.power" autocomplete="off" placeholder="0" />
         </el-form-item>
 

@@ -201,7 +201,7 @@
           >
             <i v-if="loading" class="iconfont icon-loading animate-spin"></i>
             <i v-else class="iconfont icon-chuangzuo"></i>
-            <span>{{ loading ? '创作中...' : '立即生成' }}({{ mjPower }}算力)</span>
+            <span>{{ loading ? '创作中...' : '立即生成' }}({{ mjPower }}积分)</span>
           </button>
         </div>
       </van-form>

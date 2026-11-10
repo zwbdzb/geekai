@@ -41,7 +41,7 @@
       />
       <el-button type="primary" :icon="Search" @click="search">搜索</el-button>
 
-      <el-button v-if="totalPower > 0">算力总额：{{ totalPower }}</el-button>
+      <el-button v-if="totalPower > 0">积分总额：{{ totalPower }}</el-button>
     </div>
 
     <el-row v-if="items.length > 0">

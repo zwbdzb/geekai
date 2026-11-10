@@ -65,7 +65,7 @@
                   <div class="flex items-center justify-center gap-1.5 h-full">
                     <span class="text-sm font-bold">{{ m.name }}</span>
                     <el-tag size="small" :type="m.power > 0 ? 'info' : 'success'" effect="plain">{{
-                      m.power > 0 ? m.power + '算力/次' : '免费'
+                      m.power > 0 ? m.power + '积分/次' : '免费'
                     }}</el-tag>
                   </div>
                 </el-option>

@@ -23,7 +23,7 @@
 
                 <div class="product-details">
                   <div class="detail-item">
-                    <span class="label">算力值：</span>
+                    <span class="label">积分值：</span>
                     <span class="value">{{ item.power }}</span>
                   </div>
                 </div>

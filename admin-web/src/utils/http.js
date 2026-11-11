@@ -112,19 +112,6 @@ export function httpPost(url, data = {}, options = {}) {
   })
 }
 
-export function httpPatch(url, data = {}, options = {}) {
-  return new Promise((resolve, reject) => {
-    axios
-      .patch(url, data, options)
-      .then((response) => {
-        resolve(response.data)
-      })
-      .catch((err) => {
-        reject(err)
-      })
-  })
-}
-
 export function httpDownload(url) {
   return new Promise((resolve, reject) => {
     axios({

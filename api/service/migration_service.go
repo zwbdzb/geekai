@@ -150,7 +150,6 @@ func (s *MigrationService) fullTableMigration() {
 		&model.SunoJob{},
 		&model.VideoJob{},
 		&model.JimengJob{},
-		&model.PPTJob{},
 		&model.Moderation{},
 		&model.ImageJob{},
 	}

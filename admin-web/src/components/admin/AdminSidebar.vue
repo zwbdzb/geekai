@@ -115,6 +115,11 @@ const items = [
     title: 'API-KEY',
   },
   {
+    icon: 'menu',
+    index: '/admin/library',
+    title: '公共资料库',
+  },
+  {
     icon: 'model',
     index: '/admin/chat/model',
     title: '模型管理',

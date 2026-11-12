@@ -112,6 +112,12 @@ const routes = [
         component: () => import('@/views/admin/Users.vue'),
       },
       {
+        path: '/admin/library',
+        name: 'admin-library',
+        meta: { title: '公共资料库' },
+        component: () => import('@/views/admin/Library.vue'),
+      },
+      {
         path: '/admin/app',
         name: 'admin-app',
         meta: { title: '应用列表' },

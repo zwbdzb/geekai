@@ -18,6 +18,7 @@ import (
 	"geekai/service"
 	"geekai/service/image"
 	"geekai/service/jimeng"
+	"geekai/service/library"
 	"geekai/service/mj"
 	"geekai/service/moderation"
 	"geekai/service/oss"
@@ -107,6 +108,13 @@ func main() {
 		fx.Provide(store.NewMysql),
 		fx.Provide(store.NewRedisClient),
 		fx.Provide(store.NewLevelDB),
+		fx.Provide(func(db *gorm.DB) *library.Service {
+			return library.NewService(library.NewRepository(db))
+		}),
+		fx.Provide(handler.NewLibraryHandler),
+		fx.Provide(admin.NewLibraryHandler),
+		fx.Invoke(func(h *handler.LibraryHandler) { h.RegisterRoutes() }),
+		fx.Invoke(func(h *admin.LibraryHandler) { h.RegisterRoutes() }),
 
 		fx.Provide(func() embed.FS {
 			return xdbFS

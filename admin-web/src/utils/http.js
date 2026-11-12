@@ -98,6 +98,10 @@ export function httpGet(url, params = {}) {
   })
 }
 
+export function httpDelete(url) {
+  return axios.delete(url).then((response) => response.data)
+}
+
 // send a http post request
 export function httpPost(url, data = {}, options = {}) {
   return new Promise((resolve, reject) => {

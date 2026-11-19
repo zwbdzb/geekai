@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"geekai/core/types"
 	"geekai/store/model"
@@ -9,6 +10,8 @@ import (
 
 	"gorm.io/gorm"
 )
+
+var ErrRewardAlreadyGranted = errors.New("reward already granted")
 
 type UserService struct {
 	db   *gorm.DB
@@ -24,31 +27,39 @@ func (s *UserService) IncreasePower(userId uint, power int, log model.PowerLog) 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	tx := s.db.Begin()
-	err := tx.Model(&model.User{}).Where("id", userId).UpdateColumn("power", gorm.Expr("power + ?", power)).Error
-	if err != nil {
-		tx.Rollback()
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		return s.IncreasePowerTx(tx, userId, power, log)
+	})
+}
+
+// IncreasePowerTx 将积分、奖励流水与调用方的业务操作一起提交。
+func (s *UserService) IncreasePowerTx(tx *gorm.DB, userId uint, power int, log model.PowerLog) error {
+	if err := tx.Model(&model.User{}).Where("id", userId).UpdateColumn("power", gorm.Expr("power + ?", power)).Error; err != nil {
 		return err
 	}
 	var user model.User
-	tx.Where("id", userId).First(&user)
-	err = tx.Create(&model.PowerLog{
-		UserId:    user.Id,
-		Username:  user.Username,
-		Type:      log.Type,
-		Amount:    power,
-		Balance:   user.Power,
-		Mark:      types.PowerAdd,
-		Model:     log.Model,
-		Remark:    log.Remark,
-		CreatedAt: time.Now(),
-	}).Error
-	if err != nil {
-		tx.Rollback()
+	if err := tx.Where("id", userId).First(&user).Error; err != nil {
 		return err
 	}
-	tx.Commit()
-	return nil
+	// The user row is already locked by the balance update, including across instances.
+	if log.RewardKey != nil {
+		var count int64
+		if err := tx.Model(&model.PowerLog{}).Where("reward_key = ?", *log.RewardKey).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return ErrRewardAlreadyGranted
+		}
+	}
+	entry := model.PowerLog{
+		UserId: user.Id, Username: user.Username, Type: log.Type, Amount: power,
+		Balance: user.Power, Mark: types.PowerAdd, Model: log.Model, Remark: log.Remark,
+		CreatedAt: time.Now(), RewardKey: log.RewardKey,
+	}
+	if err := prepareRewardQuota(tx, user, &entry); err != nil {
+		return err
+	}
+	return tx.Create(&entry).Error
 }
 
 // DecreasePower 减少用户积分

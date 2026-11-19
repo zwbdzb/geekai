@@ -9,6 +9,7 @@ package admin
 
 import (
 	"geekai/core"
+	"geekai/core/middleware"
 	"geekai/core/types"
 	"geekai/handler"
 	"geekai/store/model"
@@ -31,18 +32,20 @@ func NewPowerLogHandler(app *core.AppServer, db *gorm.DB) *PowerLogHandler {
 // RegisterRoutes 注册路由
 func (h *PowerLogHandler) RegisterRoutes() {
 	group := h.App.Engine.Group("/api/admin/powerLog/")
+	group.Use(middleware.AdminAuthMiddleware(h.App.Config.AdminSession.SecretKey, h.App.Redis))
 	group.POST("list", h.List)
 }
 
 func (h *PowerLogHandler) List(c *gin.Context) {
 	var data struct {
-		Username string   `json:"username"`
-		UserId   uint     `json:"userid"`
-		Type     int      `json:"type"`
-		Model    string   `json:"model"`
-		Date     []string `json:"date"`
-		Page     int      `json:"page"`
-		PageSize int      `json:"page_size"`
+		Username    string   `json:"username"`
+		UserId      uint     `json:"userid"`
+		Type        int      `json:"type"`
+		QuotaStatus string   `json:"quota_status"`
+		Model       string   `json:"model"`
+		Date        []string `json:"date"`
+		Page        int      `json:"page"`
+		PageSize    int      `json:"page_size"`
 	}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		resp.ERROR(c, types.InvalidArgs)
@@ -55,6 +58,9 @@ func (h *PowerLogHandler) List(c *gin.Context) {
 	}
 	if data.Type > 0 {
 		session = session.Where("type", data.Type)
+	}
+	if data.QuotaStatus != "" {
+		session = session.Where("quota_status = ?", data.QuotaStatus)
 	}
 	if data.UserId > 0 {
 		session = session.Where("user_id", data.UserId)

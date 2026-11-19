@@ -30,6 +30,7 @@ export function PointsPanel({ userId }: { userId: number }) {
   const stats = useQuery({
     queryKey: ["space-power-stats", userId],
     queryFn: fetchPowerStats,
+    refetchInterval: 15_000,
   });
   const invite = useQuery({
     queryKey: ["space-invite-stats", userId],
@@ -44,6 +45,8 @@ export function PointsPanel({ userId }: { userId: number }) {
         page_size: pageSize,
         date: from && to ? [from, to] : undefined,
       }),
+    refetchInterval: (query) => query.state.data?.items.some((log) =>
+      log.quota_status === "pending" || log.quota_status === "processing") ? 5000 : false,
   });
 
   const total = logs.data?.total ?? 0;
@@ -70,11 +73,12 @@ export function PointsPanel({ userId }: { userId: number }) {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard icon={<Coins size={20} />} label={t("space.balance")} value={formatNumber(stats.data?.balance, i18n.language)} loading={stats.isLoading} />
         <StatCard icon={<TrendingDown size={20} />} label={t("space.total_consumed")} value={formatNumber(stats.data?.total, i18n.language)} loading={stats.isLoading} />
         <StatCard icon={<TrendingUp size={20} />} label={t("space.today_consumed")} value={formatNumber(stats.data?.today, i18n.language)} loading={stats.isLoading} />
         <StatCard icon={<Gift size={20} />} label={t("space.invite_rewards")} value={formatNumber(invite.data?.reward_total, i18n.language)} loading={invite.isLoading} />
+        <StatCard icon={<Coins size={20} />} label={t("space.quota_granted")} value={formatNumber(stats.data?.quota_granted, i18n.language)} loading={stats.isLoading} />
       </div>
 
       <div className="rounded-xl border border-hairline bg-canvas">
@@ -143,13 +147,15 @@ export function PointsPanel({ userId }: { userId: number }) {
                 <th className="px-5 py-3">{t("space.type")}</th>
                 <th className="px-5 py-3 text-right">{t("space.amount")}</th>
                 <th className="px-5 py-3 text-right">{t("space.balance_after")}</th>
+                <th className="px-5 py-3 text-right">{t("space.quota_amount")}</th>
+                <th className="px-5 py-3">{t("space.quota_status")}</th>
                 <th className="px-5 py-3">{t("space.detail")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline-soft">
               {logs.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted">{t("space.loading")}</td>
+                  <td colSpan={7} className="px-5 py-10 text-center text-muted">{t("space.loading")}</td>
                 </tr>
               ) : logs.data?.items.length ? (
                 logs.data.items.map((log) => (
@@ -162,6 +168,14 @@ export function PointsPanel({ userId }: { userId: number }) {
                       {log.mark === 1 ? "+" : "-"}{formatNumber(Math.abs(log.amount), i18n.language)}
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-right text-body">{formatNumber(log.balance, i18n.language)}</td>
+                    <td className="whitespace-nowrap px-5 py-3 text-right text-body">{log.quota_amount ? `+${formatNumber(log.quota_amount, i18n.language)}` : "—"}</td>
+                    <td className="whitespace-nowrap px-5 py-3 text-body" title={log.quota_error ? t("space.quota_error_hint") : undefined}>
+                      {log.quota_status ? (
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${log.quota_status === "succeeded" ? "bg-emerald-50 text-emerald-700" : log.quota_status === "failed" || log.quota_status === "unknown" ? "bg-amber-50 text-amber-800" : "bg-surface-card text-body-strong"}`}>
+                          {t(`space.quota_states.${log.quota_status}`, { defaultValue: t("space.quota_states.unknown") })}
+                        </span>
+                      ) : "—"}
+                    </td>
                     <td className="min-w-[180px] px-5 py-3 text-muted">
                       {log.remark || log.model || "—"}
                     </td>
@@ -169,7 +183,7 @@ export function PointsPanel({ userId }: { userId: number }) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted">{t("space.no_records")}</td>
+                  <td colSpan={7} className="px-5 py-10 text-center text-muted">{t("space.no_records")}</td>
                 </tr>
               )}
             </tbody>

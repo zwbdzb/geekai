@@ -17,6 +17,14 @@ type PowerLog struct {
 	Remark    string          `gorm:"column:remark;type:varchar(512);not null;comment:备注" json:"remark"`
 	Mark      types.PowerMark `gorm:"column:mark;type:tinyint(1);not null;comment:资金类型（0：支出，1：收入）" json:"mark"`
 	CreatedAt time.Time       `gorm:"column:created_at;type:datetime;not null;comment:创建时间" json:"created_at"`
+
+	RewardKey        *string    `gorm:"column:reward_key;type:varchar(128);uniqueIndex;default:null" json:"-"`
+	QuotaAmount      int64      `gorm:"column:quota_amount;type:bigint;not null;default:0" json:"quota_amount"`
+	QuotaStatus      string     `gorm:"column:quota_status;type:varchar(24);not null;default:'';index" json:"quota_status"`
+	QuotaSubject     string     `gorm:"column:quota_subject;type:varchar(256);not null;default:''" json:"-"`
+	QuotaIdentity    string     `gorm:"column:quota_identity;type:char(64);not null;default:''" json:"-"`
+	QuotaError       string     `gorm:"column:quota_error;type:varchar(64);not null;default:''" json:"quota_error"`
+	QuotaAttemptedAt *time.Time `gorm:"column:quota_attempted_at;type:datetime" json:"-"`
 }
 
 func (m *PowerLog) TableName() string {

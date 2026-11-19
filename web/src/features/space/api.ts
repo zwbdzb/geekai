@@ -9,6 +9,7 @@ export interface PowerStats {
   total: number;
   today: number;
   balance: number;
+  quota_granted?: number;
 }
 
 export interface InviteStats {
@@ -31,6 +32,9 @@ export interface PowerLog {
   model?: string;
   remark?: string;
   created_at: number;
+  quota_amount?: number;
+  quota_status?: string;
+  quota_error?: string;
 }
 
 export async function fetchPowerStats(): Promise<PowerStats> {

@@ -390,7 +390,7 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 	// 记录邀请关系
 	if code != "" {
 		var inviteCode model.InviteCode
-		err := h.DB.Where("code = ?", code).First(&inviteCode).Error
+		err := tx.Where("code = ?", code).First(&inviteCode).Error
 		if err != nil {
 			logger.Error("无效的邀请码：", err.Error())
 			tx.Rollback()
@@ -398,9 +398,12 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 		}
 
 		// 增加邀请数量
-		h.DB.Model(&model.InviteCode{}).Where("code = ?", code).UpdateColumn("reg_num", gorm.Expr("reg_num + ?", 1))
+		if err := tx.Model(&model.InviteCode{}).Where("code = ?", code).UpdateColumn("reg_num", gorm.Expr("reg_num + ?", 1)).Error; err != nil {
+			tx.Rollback()
+			return user, err
+		}
 		if h.App.SysConfig.Base.InvitePower > 0 {
-			err := h.userService.IncreasePower(inviteCode.UserId, h.App.SysConfig.Base.InvitePower, model.PowerLog{
+			err := h.userService.IncreasePowerTx(tx, inviteCode.UserId, h.App.SysConfig.Base.InvitePower, model.PowerLog{
 				Type:   types.PowerInvite,
 				Model:  "Invite",
 				Remark: fmt.Sprintf("邀请用户注册奖励，金额：%d，邀请码：%s，新用户：%s", h.App.SysConfig.Base.InvitePower, inviteCode.Code, user.Username),
@@ -785,15 +788,24 @@ func (h *UserHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	// 签到
-	h.levelDB.Put(key, true)
-	if h.App.SysConfig.Base.DailyPower > 0 {
-		h.userService.IncreasePower(userId, h.App.SysConfig.Base.DailyPower, model.PowerLog{
-			Type:   types.PowerSignIn,
-			Model:  "SignIn",
-			Remark: fmt.Sprintf("每日签到奖励，金额：%d", h.App.SysConfig.Base.DailyPower),
-		})
+	// A unique database key commits the daily award and quota record together.
+	power := max(0, h.App.SysConfig.Base.DailyPower)
+	err = h.userService.IncreasePower(userId, power, model.PowerLog{
+		RewardKey: &key,
+		Type:      types.PowerSignIn,
+		Model:     "SignIn",
+		Remark:    fmt.Sprintf("每日签到奖励，金额：%d", power),
+	})
+	if errors.Is(err, service.ErrRewardAlreadyGranted) {
+		resp.ERROR(c, "今日已签到，请明日再来！")
+		return
 	}
+	if err != nil {
+		logger.Errorw("signin_reward_failed", "user_id", userId)
+		resp.ERROR(c, "签到失败，请稍后重试")
+		return
+	}
+	h.levelDB.Put(key, true)
 	resp.SUCCESS(c)
 }
 

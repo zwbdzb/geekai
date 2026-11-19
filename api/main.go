@@ -115,6 +115,8 @@ func main() {
 		fx.Provide(admin.NewLibraryHandler),
 		fx.Invoke(func(h *handler.LibraryHandler) { h.RegisterRoutes() }),
 		fx.Invoke(func(h *admin.LibraryHandler) { h.RegisterRoutes() }),
+		fx.Provide(handler.NewClientEventHandler),
+		fx.Invoke(func(h *handler.ClientEventHandler) { h.RegisterRoutes() }),
 
 		fx.Provide(func() embed.FS {
 			return xdbFS

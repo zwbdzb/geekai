@@ -12,8 +12,9 @@ import (
 // 统一参数处理
 func ParameterHandlerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Library handlers bound their JSON bodies before reading them.
-		if strings.HasPrefix(c.Request.URL.Path, "/api/v1/library") || strings.HasPrefix(c.Request.URL.Path, "/api/admin/library") {
+		// These handlers bound their own bodies and preserve raw JSON contents.
+		path := c.Request.URL.Path
+		if path == "/api/v1/events" || path == "/v1/events" || strings.HasPrefix(path, "/api/v1/library") || strings.HasPrefix(path, "/api/admin/library") {
 			c.Next()
 			return
 		}

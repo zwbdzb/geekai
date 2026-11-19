@@ -348,7 +348,7 @@ func (h *UserHandler) TokengineComplete(c *gin.Context) {
 		resp.ERROR(c, "用户不存在或已被禁止登录")
 		return
 	}
-	token, err := h.doLogin(&user, c.ClientIP())
+	token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 	if err != nil {
 		resp.ERROR(c, "登录失败，请稍后重试")
 		return

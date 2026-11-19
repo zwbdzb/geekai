@@ -199,7 +199,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := h.doLogin(&user, c.ClientIP())
+	token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 	if err != nil {
 		resp.ERROR(c, err.Error())
 		return
@@ -252,7 +252,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.doLogin(&user, c.ClientIP())
+	token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 	if err != nil {
 		resp.ERROR(c, err.Error())
 		return
@@ -326,7 +326,7 @@ func (h *UserHandler) GetWxLoginState(c *gin.Context) {
 		}
 	}
 
-	token, err := h.doLogin(&user, c.ClientIP())
+	token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 	if err != nil {
 		resp.ERROR(c, err.Error())
 		return
@@ -436,7 +436,7 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 }
 
 // doLogin 执行登录操作
-func (h *UserHandler) doLogin(user *model.User, ip string) (string, error) {
+func (h *UserHandler) doLogin(ctx context.Context, user *model.User, ip string) (string, error) {
 	// 更新最后登录时间和IP
 	user.LastLoginIp = ip
 	user.LastLoginAt = time.Now().Unix()
@@ -472,6 +472,7 @@ func (h *UserHandler) doLogin(user *model.User, ip string) (string, error) {
 		return "", fmt.Errorf("error with save token: %v", err)
 	}
 
+	h.ensureTokengineAccount(ctx, *user)
 	return tokenString, nil
 }
 
@@ -849,7 +850,7 @@ func (h *UserHandler) WxAuthLogin(c *gin.Context) {
 			return
 		}
 
-		token, err := h.doLogin(&user, c.ClientIP())
+		token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 		if err != nil {
 			resp.ERROR(c, err.Error())
 			return
@@ -878,7 +879,7 @@ func (h *UserHandler) WxAuthLogin(c *gin.Context) {
 	}
 
 	// 自动登录
-	token, err := h.doLogin(&user, c.ClientIP())
+	token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 	if err != nil {
 		resp.ERROR(c, err.Error())
 		return

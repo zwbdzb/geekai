@@ -101,7 +101,7 @@ func (h *UserHandler) MobileLogin(c *gin.Context) {
 		}
 	}
 
-	token, err := h.doLogin(&user, c.ClientIP())
+	token, err := h.doLogin(c.Request.Context(), &user, c.ClientIP())
 	if err != nil {
 		resp.ERROR(c, err.Error())
 		return

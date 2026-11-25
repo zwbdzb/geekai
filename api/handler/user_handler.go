@@ -356,10 +356,7 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 		if user.Username == "" {
 			user.Username = fmt.Sprintf("wx@%d", utils.RandomNumber(8))
 		}
-		// 如果未设置密码，则生成默认密码
-		if user.Password == "" {
-			user.Password = "geekai123"
-		}
+		// 第三方登录用户密码保持空值，仅能通过 OAuth 方式登录
 	} else {
 		if user.Nickname == "" && user.TokengineSubject == "" {
 			user.Nickname = fmt.Sprintf("用户@%d", utils.RandomNumber(6))

@@ -67,15 +67,14 @@ type TokengineUserProfile struct {
 
 func NewTokengineOAuth(config types.TokengineOAuthConfig) *TokengineOAuth {
 	config.BaseURL = strings.TrimRight(config.BaseURL, "/")
-	if config.InternalBaseURL == "" {
-		config.InternalBaseURL = config.BaseURL
-	} else {
-		config.InternalBaseURL = strings.TrimSuffix(config.InternalBaseURL, "/")
-	}
+	config.InternalBaseURL = strings.TrimSuffix(strings.TrimSpace(config.InternalBaseURL), "/")
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
 	return &TokengineOAuth{
 		config: config,
 		client: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout:   10 * time.Second,
+			Transport: transport,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
 				return errTokengineRedirect
 			},
@@ -238,7 +237,7 @@ func (s *TokengineOAuth) UserInfo(ctx context.Context, accessToken string) (Toke
 	return identity, nil
 }
 
-// UserProfile accepts only a subject already verified by UserInfo.
+// UserProfile retrieves an account from the provider's management API by subject.
 func (s *TokengineOAuth) UserProfile(ctx context.Context, subject, serviceToken string) (*TokengineUserProfile, error) {
 	serviceToken = strings.TrimSpace(serviceToken)
 	if err := s.validateProvider(); err != nil || serviceToken == "" {

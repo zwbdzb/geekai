@@ -32,17 +32,19 @@ func NewClientEventHandler(app *core.AppServer, db *gorm.DB) *ClientEventHandler
 	if maxBytes <= 0 {
 		maxBytes = defaultClientEventMaxBytes
 	}
+	oauth := service.NewTokengineOAuth(app.Config.TokengineOAuth)
 	return &ClientEventHandler{
 		BaseHandler: BaseHandler{App: app, DB: db},
 		events:      service.NewClientEventService(db),
-		oauth:       service.NewTokengineOAuth(app.Config.TokengineOAuth),
-		gift:        service.NewFirstUseGiftService(db, app.Config.FirstUseGift, app.Config.TokengineOAuth.BaseURL, app.Config.TokengineManagementToken()),
+		oauth:       oauth,
+		gift:        service.NewFirstUseGiftService(db, oauth, app.Config.TokengineManagementToken()),
 		maxBytes:    maxBytes,
 	}
 }
 
 func (h *ClientEventHandler) RegisterRoutes(r *core.Router) {
 	public := r.PublicGroup("")
+	public.POST("/api/events", h.Report)
 	public.POST("/api/v1/events", h.Report)
 	// Existing desktop installations post to this path.
 	public.POST("/v1/events", h.Report)

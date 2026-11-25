@@ -9,7 +9,6 @@ import (
 	"geekai/store/model"
 	"geekai/utils"
 	"geekai/utils/resp"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"sort"
@@ -37,6 +36,13 @@ type tokengineSavedProfile struct {
 	service.TokengineIdentity
 	Profile *service.TokengineUserProfile `json:"profile,omitempty"`
 }
+
+type tokengineAccountSource int
+
+const (
+	tokengineOAuthLogin tokengineAccountSource = iota
+	tokengineDesktopCheckin
+)
 
 func oauthHeaders(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
@@ -133,7 +139,7 @@ func (h *UserHandler) TokengineCallback(c *gin.Context) {
 			logger.Warnw("tokengine_profile_sync_failed", "subject", identity.Subject, "reason", failure.Reason, "upstream_status", failure.StatusCode)
 		}
 	}
-	user, err := h.tokengineUser(c.Request.Context(), identity, profile, saved.InviteCode)
+	user, err := h.tokengineUser(c.Request.Context(), identity, profile, saved.InviteCode, tokengineOAuthLogin)
 	if err != nil {
 		h.tokengineFailure(c, err.Error())
 		return
@@ -149,10 +155,11 @@ func (h *UserHandler) TokengineCallback(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/login?"+query.Encode())
 }
 
-func (h *UserHandler) tokengineUser(ctx context.Context, identity service.TokengineIdentity, profile *service.TokengineUserProfile, invite string) (model.User, error) {
+func (h *UserHandler) tokengineUser(ctx context.Context, identity service.TokengineIdentity, profile *service.TokengineUserProfile, invite string, source tokengineAccountSource) (model.User, error) {
 	key := h.tokengineOAuth.IdentityKey(identity.Subject)
 	var user model.User
-	err := h.DB.Where("tokengine_id = ?", key).First(&user).Error
+	db := h.DB.WithContext(ctx)
+	err := db.Where("tokengine_id = ?", key).First(&user).Error
 	newUser := errors.Is(err, gorm.ErrRecordNotFound)
 	if err != nil && !newUser {
 		return user, errors.New("查询用户失败，请稍后重试")
@@ -170,8 +177,15 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 			defer unlock()
 			lockedMobile = profile.Telephone
 			var matches []model.User
-			if h.DB.Where("mobile = ?", profile.Telephone).Limit(2).Find(&matches).Error != nil {
+			if db.Where("mobile = ?", lockedMobile).Limit(2).Find(&matches).Error != nil {
 				return user, errors.New("查询用户失败，请稍后重试")
+			}
+			if source == tokengineDesktopCheckin && len(matches) > 0 {
+				// Linking a different website account requires an authenticated OAuth callback.
+				if len(matches) == 1 && matches[0].TokengineID != nil && *matches[0].TokengineID == key {
+					return matches[0], nil
+				}
+				return model.User{}, errCheckinMobileConflict
 			}
 			if len(matches) > 1 {
 				return user, errors.New("该手机号对应多个账号，请联系管理员")
@@ -185,6 +199,12 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 			}
 		}
 	}
+	if source == tokengineDesktopCheckin {
+		if !newUser {
+			return user, nil
+		}
+		return h.createTokengineCheckinUser(ctx, identity.Subject, key, lockedMobile, profile)
+	}
 	if newUser && !h.App.SysConfig.Base.EnabledRegister {
 		return user, errors.New("注册功能已关闭，请使用已注册的账号登录")
 	}
@@ -197,38 +217,16 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 		nickname = nickname[:30]
 	}
 	username := user.Username
-	if (newUser || user.Platform == "tokengine") && len(nickname) > 0 && string(nickname) != user.Username {
-		username = string(nickname)
+	candidate := string(nickname)
+	if (newUser || user.Platform == "tokengine") && candidate != "" && candidate != user.Username {
 		var occupied int64
-		if h.DB.Model(&model.User{}).Where("username = ? AND id <> ?", username, user.Id).Count(&occupied).Error != nil {
+		if db.Model(&model.User{}).Where("username = ? AND id <> ?", candidate, user.Id).Count(&occupied).Error != nil {
 			return user, errors.New("查询用户名失败，请稍后重试")
 		}
-		if occupied > 0 {
-			// A matching name never links an unrelated local account to this provider identity.
-			const suffixes = "abcdefghijklmnopqrstuvwxyz123456789"
-			prefix := nickname
-			if len(prefix) > 29 {
-				prefix = prefix[:29]
-			}
-			current := []rune(user.Username)
-			if !newUser && len(current) == len(prefix)+1 && strings.HasPrefix(user.Username, string(prefix)) && strings.ContainsRune(suffixes, current[len(current)-1]) {
-				username = user.Username
-			} else {
-				username = ""
-				for _, index := range rand.Perm(len(suffixes)) {
-					candidate := string(prefix) + string(suffixes[index])
-					if h.DB.Model(&model.User{}).Where("username = ? AND id <> ?", candidate, user.Id).Count(&occupied).Error != nil {
-						return user, errors.New("查询用户名失败，请稍后重试")
-					}
-					if occupied == 0 {
-						username = candidate
-						break
-					}
-				}
-				if username == "" {
-					return user, errors.New("该平台用户名的单字符后缀已被占用，请修改平台用户名后重试")
-				}
-			}
+		if occupied == 0 {
+			username = candidate
+		} else if newUser {
+			return user, errors.New("用户名已被占用，请修改 Token 平台用户名后重试")
 		}
 	} else if newUser {
 		username = "token_" + utils.RandString(20)
@@ -242,15 +240,11 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 	}
 	if newUser {
 		// Keep the verified mobile and identity together if later profile sync fails.
-		user, err = h.createNewUser(model.User{
+		user, err = h.createTokengineUser(ctx, model.User{
 			Username: username, Nickname: string(nickname), Mobile: lockedMobile, Platform: "tokengine", TokengineID: &key,
 		}, invite)
 		if err != nil {
-			// Another callback may have inserted this identity while we were creating it.
-			user = model.User{}
-			if h.DB.Where("tokengine_id = ?", key).First(&user).Error != nil {
-				return user, errors.New("创建用户失败，请检查邀请码或稍后重试")
-			}
+			return user, errors.New("创建用户失败，请检查邀请码或稍后重试")
 		}
 	}
 	if !user.Status {
@@ -330,6 +324,21 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 		return user, errors.New("该 Token 平台用户已被禁止登录，请联系管理员")
 	}
 	return user, nil
+}
+
+func (h *UserHandler) createTokengineUser(ctx context.Context, account model.User, invite string) (model.User, error) {
+	user, createErr := h.createNewUser(account, invite)
+	if createErr == nil {
+		return user, nil
+	}
+
+	// Another request may have registered this identity while the insert was in progress.
+	var existing model.User
+	err := h.DB.WithContext(ctx).Where("tokengine_id = ?", account.TokengineID).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return existing, createErr
+	}
+	return existing, err
 }
 
 func (h *UserHandler) TokengineComplete(c *gin.Context) {

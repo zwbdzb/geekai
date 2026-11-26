@@ -33,7 +33,6 @@ type PowerLog struct {
 	QuotaAmount      int64      `gorm:"column:quota_amount;type:bigint;not null;default:0" json:"quota_amount"`
 	QuotaStatus      string     `gorm:"column:quota_status;type:varchar(24);not null;default:'';index" json:"quota_status"`
 	QuotaSubject     string     `gorm:"column:quota_subject;type:varchar(256);not null;default:''" json:"-"`
-	QuotaIdentity    string     `gorm:"column:quota_identity;type:char(64);not null;default:''" json:"-"`
 	QuotaError       string     `gorm:"column:quota_error;type:varchar(64);not null;default:''" json:"quota_error"`
 	QuotaAttemptedAt *time.Time `gorm:"column:quota_attempted_at;type:datetime" json:"-"`
 }

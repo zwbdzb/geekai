@@ -141,7 +141,7 @@ func TestLedgerChargeWritesPostDeductionBalance(t *testing.T) {
 	// INSERT 的取值顺序与 model.PowerLog 字段声明顺序一致：
 	mock.ExpectExec(logInsertSQL).WithArgs(
 		7, "alice", types.PowerConsume, 2, 8, "gpt-4o", "测试扣费", types.PowerSub, "job:mj", 5, sqlmock.AnyArg(),
-		0, "", "", "", "", nil,
+		0, "", "", "", nil,
 	).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -199,7 +199,7 @@ func TestLedgerRefundIdempotent(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "power"}).AddRow(7, "alice", 10))
 	mock.ExpectExec(logInsertSQL).WithArgs(
 		7, "alice", types.PowerRefund, 3, 13, "mid-journey", "任务失败，退回积分", types.PowerAdd, "job:mj", 5, sqlmock.AnyArg(),
-		0, "", "", "", "", nil,
+		0, "", "", "", nil,
 	).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec(creditSQL).WithArgs(3, 7).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
@@ -305,7 +305,6 @@ func TestLedgerSignInGrantsQuotaOnceAcrossMigration(t *testing.T) {
 	ref := LedgerRef{Type: "signin:2026-11-20", ID: 7}
 	key := "signin/7/2026-11-20"
 	log := model.PowerLog{Type: types.PowerSignIn, Model: "SignIn", RewardKey: &key}
-	const identity = "staging-identity"
 
 	for _, tc := range []struct {
 		name      string
@@ -321,18 +320,18 @@ func TestLedgerSignInGrantsQuotaOnceAcrossMigration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mock.ExpectBegin()
 			mock.ExpectQuery(userSelectSQL).WithArgs(7).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "username", "power", "tokengine_subject", "tokengine_id"}).
-					AddRow(7, "alice", 10, "u_1", identity))
-			subject, quotaIdentity := "", ""
+				WillReturnRows(sqlmock.NewRows([]string{"id", "username", "power", "tokengine_subject"}).
+					AddRow(7, "alice", 10, "u_1"))
+			subject := ""
 			if tc.amount > 0 {
 				mock.ExpectQuery("SELECT .*geekai_configs").WithArgs(types.ConfigKeyRewardQuota).
 					WillReturnRows(sqlmock.NewRows([]string{"name", "value"}).
 						AddRow(types.ConfigKeyRewardQuota, `{"enabled":true,"quota_per_point":100}`))
-				subject, quotaIdentity = "u_1", identity
+				subject = "u_1"
 			}
 			insert := mock.ExpectExec(logInsertSQL).WithArgs(
 				7, "alice", types.PowerSignIn, tc.amount, 10+tc.amount, "SignIn", "", types.PowerAdd,
-				ref.Type, ref.ID, sqlmock.AnyArg(), tc.quota, tc.status, subject, quotaIdentity, "", nil, key,
+				ref.Type, ref.ID, sqlmock.AnyArg(), tc.quota, tc.status, subject, "", nil, key,
 			)
 			if tc.duplicate {
 				insert.WillReturnError(errors.New("Error 1062: Duplicate entry for key 'idx_geekai_power_logs_reward_key'"))

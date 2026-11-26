@@ -52,16 +52,12 @@ func TestTokengineUsesInternalBaseURLForBackendRequests(t *testing.T) {
 		Enabled: true, BaseURL: "https://provider.example", ClientID: "thinkbuddy-web",
 		RedirectURL: "https://thinkbuddy.example" + TokengineCallbackPath,
 	}
-	publicOAuth := NewTokengineOAuth(config)
 	config.InternalBaseURL = "http://provider.test.svc.cluster.local:3000/"
 	oauth := NewTokengineOAuth(config)
 
 	authorizeURL, err := oauth.AuthorizeURL("test-state", "test-verifier")
 	if err != nil || !strings.HasPrefix(authorizeURL, config.BaseURL+"/oauth/authorize?") {
 		t.Fatalf("authorization must use the public address: %q, %v", authorizeURL, err)
-	}
-	if key := oauth.IdentityKey("u_42"); key == "" || key != publicOAuth.IdentityKey("u_42") {
-		t.Fatal("the internal address changed the account identity key")
 	}
 
 	oauth.client.Transport = tokengineTestTransport(func(r *http.Request) (*http.Response, error) {
@@ -116,7 +112,7 @@ func TestTokengineUsesInternalBaseURLForBackendRequests(t *testing.T) {
 	if err := quota.Validate(); err != nil {
 		t.Fatal(err)
 	}
-	reward := model.PowerLog{QuotaSubject: identity.Subject, QuotaIdentity: oauth.IdentityKey(identity.Subject), QuotaAmount: 100}
+	reward := model.PowerLog{QuotaSubject: identity.Subject, QuotaAmount: 100}
 	if status, reason := quota.grant(context.Background(), reward); status != QuotaSucceeded {
 		t.Fatalf("internal quota grant failed: %s %s", status, reason)
 	}

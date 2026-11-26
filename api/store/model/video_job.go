@@ -21,5 +21,5 @@ type VideoJob struct {
 }
 
 func (m *VideoJob) TableName() string {
-	return "geekai_video_jobs"
+	return "video_jobs"
 }

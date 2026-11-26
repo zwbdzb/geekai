@@ -320,7 +320,7 @@ func (s *Service) SyncTaskProgress() {
 				Where("status", types.VideoStatusFailed).Where("power > ?", 0).Find(&jobs)
 			for _, job := range jobs {
 				_, err := s.ledgerService.RefundFailedJob(service.FailedJobRefund{
-					Table:   "geekai_video_jobs",
+					Table:   "video_jobs",
 					JobId:   job.Id,
 					UserId:  job.UserId,
 					Power:   job.Power,

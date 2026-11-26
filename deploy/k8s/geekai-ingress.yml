@@ -13,11 +13,11 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - thinkbuddy-t.hanyoai.com
+        - thinkbuddy.hanyoai.com
       # Reuse the existing TLS Secret in this namespace.
       secretName: thinkbuddy-tls
   rules:
-    - host: thinkbuddy-t.hanyoai.com
+    - host: thinkbuddy.hanyoai.com
       http:
         paths:
           - path: /

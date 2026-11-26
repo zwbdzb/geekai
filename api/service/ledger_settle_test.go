@@ -5,7 +5,7 @@ package service
 // *
 // * 断言的核心事实：同一笔任务被扫描第二次时，
 // * 抢占式 UPDATE 命中 0 行 -> 直接返回 (false, nil)，
-// * 事务里不会出现任何 INSERT geekai_power_logs / UPDATE geekai_users，
+// * 事务里不会出现任何 INSERT power_logs / UPDATE users，
 // * 也就是用户余额一分钱都没变。
 // * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -17,11 +17,11 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-const jobClaimSQL = "UPDATE `geekai_mj_jobs` SET `power`=\\? WHERE id = \\? AND power > 0"
+const jobClaimSQL = "UPDATE `mj_jobs` SET `power`=\\? WHERE id = \\? AND power > 0"
 
 func mjRefund() FailedJobRefund {
 	return FailedJobRefund{
-		Table:   "geekai_mj_jobs",
+		Table:   "mj_jobs",
 		JobId:   42,
 		UserId:  7,
 		Power:   3,
@@ -45,7 +45,7 @@ func TestLedgerRefundFailedJobFirstTime(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "power"}).AddRow(7, "alice", 10))
 	mock.ExpectExec(logInsertSQL).WithArgs(
 		7, "alice", types.PowerRefund, 3, 13, "mid-journey", "任务失败，退回积分。任务ID：42", types.PowerAdd, "job:mj", 42, sqlmock.AnyArg(),
-		0, "", "", "", "", nil,
+		0, "", "", "", nil,
 	).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec(creditSQL).WithArgs(3, 7).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()

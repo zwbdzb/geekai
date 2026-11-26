@@ -141,11 +141,15 @@ func (h *UserHandler) TokengineCallback(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/login?"+query.Encode())
 }
 
-func (h *UserHandler) tokengineUser(ctx context.Context, identity service.TokengineIdentity, invite string, checkinProfile *service.TokengineUserProfile) (model.User, error) {
-	key := h.tokengineOAuth.IdentityKey(identity.Subject)
+func (h *UserHandler) findTokengineUser(ctx context.Context, subject string) (model.User, error) {
 	var user model.User
+	err := h.DB.WithContext(ctx).Where("tokengine_subject = ?", subject).First(&user).Error
+	return user, err
+}
+
+func (h *UserHandler) tokengineUser(ctx context.Context, identity service.TokengineIdentity, invite string, checkinProfile *service.TokengineUserProfile) (model.User, error) {
+	user, err := h.findTokengineUser(ctx, identity.Subject)
 	db := h.DB.WithContext(ctx)
-	err := db.Where("tokengine_id = ?", key).First(&user).Error
 	newUser := errors.Is(err, gorm.ErrRecordNotFound)
 	if err != nil && !newUser {
 		return user, errors.New("查询用户失败，请稍后重试")
@@ -169,7 +173,7 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 			}
 			if checkinProfile != nil && len(matches) > 0 {
 				// Linking a different website account requires an authenticated OAuth callback.
-				if len(matches) == 1 && matches[0].TokengineID != nil && *matches[0].TokengineID == key {
+				if len(matches) == 1 && matches[0].TokengineSubject != nil && *matches[0].TokengineSubject == identity.Subject {
 					return matches[0], nil
 				}
 				return model.User{}, errCheckinMobileConflict
@@ -179,7 +183,7 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 			}
 			if len(matches) == 1 {
 				user = matches[0]
-				if user.TokengineID != nil && *user.TokengineID != "" && *user.TokengineID != key {
+				if user.TokengineSubject != nil && *user.TokengineSubject != identity.Subject {
 					return user, errors.New("该手机号对应的账号已绑定其他 Token 平台用户，请联系管理员")
 				}
 				newUser = false
@@ -190,7 +194,7 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 		if !newUser {
 			return user, nil
 		}
-		return h.createTokengineCheckinUser(ctx, identity.Subject, key, lockedMobile, checkinProfile)
+		return h.createTokengineCheckinUser(ctx, identity.Subject, lockedMobile, checkinProfile)
 	}
 	if newUser && !h.App.SysConfig.Base.EnabledRegister {
 		return user, errors.New("注册功能已关闭，请使用已注册的账号登录")
@@ -228,7 +232,7 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 	if newUser {
 		// Keep the verified mobile and identity together if later profile sync fails.
 		user, err = h.createTokengineUser(ctx, model.User{
-			Username: username, Nickname: string(nickname), Mobile: lockedMobile, Platform: "tokengine", TokengineID: &key,
+			Username: username, Nickname: string(nickname), Mobile: lockedMobile, Platform: "tokengine", TokengineSubject: &identity.Subject,
 		}, invite)
 		if err != nil {
 			return user, errors.New("创建用户失败，请检查邀请码或稍后重试")
@@ -247,10 +251,10 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 	if err != nil {
 		return user, errors.New("保存 Token 平台用户资料失败，请稍后重试")
 	}
-	updates := map[string]any{"tokengine_subject": identity.Subject, "tokengine_profile": string(data)}
-	bindExisting := user.TokengineID == nil || *user.TokengineID == ""
+	updates := map[string]any{"tokengine_profile": string(data)}
+	bindExisting := user.TokengineSubject == nil
 	if bindExisting {
-		updates["tokengine_id"] = key
+		updates["tokengine_subject"] = identity.Subject
 	}
 	if !newUser && username != user.Username {
 		updates["username"] = username
@@ -285,9 +289,9 @@ func (h *UserHandler) tokengineUser(ctx context.Context, identity service.Tokeng
 			}
 		}
 	}
-	update := h.DB.Model(&user)
+	update := db.Model(&user)
 	if bindExisting {
-		update = update.Where("(tokengine_id IS NULL OR tokengine_id = '') AND mobile = ?", lockedMobile)
+		update = update.Where("tokengine_subject IS NULL AND mobile = ?", lockedMobile)
 	}
 	result := update.Updates(updates)
 	if result.Error != nil || bindExisting && result.RowsAffected == 0 {
@@ -304,7 +308,7 @@ func (h *UserHandler) createTokengineUser(ctx context.Context, account model.Use
 
 	// Another request may have registered this identity while the insert was in progress.
 	var existing model.User
-	err := h.DB.WithContext(ctx).Where("tokengine_id = ?", account.TokengineID).First(&existing).Error
+	err := h.DB.WithContext(ctx).Where("tokengine_subject = ?", account.TokengineSubject).First(&existing).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return existing, createErr
 	}

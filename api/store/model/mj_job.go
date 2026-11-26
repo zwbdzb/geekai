@@ -25,5 +25,5 @@ type MidJourneyJob struct {
 }
 
 func (m *MidJourneyJob) TableName() string {
-	return "geekai_mj_jobs"
+	return "mj_jobs"
 }

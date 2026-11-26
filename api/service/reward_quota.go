@@ -50,8 +50,8 @@ func prepareRewardQuota(tx *gorm.DB, user model.User, entry *model.PowerLog) err
 	}
 	entry.QuotaAmount = int64(entry.Amount) * rule.QuotaPerPoint
 	entry.QuotaStatus = QuotaWaiting
-	if user.TokengineSubject != "" && user.TokengineID != nil && *user.TokengineID != "" {
-		entry.QuotaSubject, entry.QuotaIdentity = user.TokengineSubject, *user.TokengineID
+	if user.TokengineSubject != nil {
+		entry.QuotaSubject = *user.TokengineSubject
 		entry.QuotaStatus = QuotaPending
 	}
 	return nil
@@ -107,7 +107,7 @@ func (s *RewardQuotaService) processOne(ctx context.Context) error {
 	}
 	var reward model.PowerLog
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		bound := tx.Model(&model.User{}).Select("id").Where("tokengine_subject <> '' AND tokengine_id IS NOT NULL AND tokengine_id <> ''")
+		bound := tx.Model(&model.User{}).Select("id").Where("tokengine_subject IS NOT NULL")
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("quota_status = ? OR (quota_status = ? AND user_id IN (?))", QuotaPending, QuotaWaiting, bound).
 			Order("id ASC").First(&reward).Error; err != nil {
@@ -118,14 +118,14 @@ func (s *RewardQuotaService) processOne(ctx context.Context) error {
 			if err := tx.First(&user, reward.UserId).Error; err != nil {
 				return err
 			}
-			if user.TokengineID == nil || user.TokengineSubject == "" {
+			if user.TokengineSubject == nil {
 				return errors.New("reward identity unavailable")
 			}
-			reward.QuotaSubject, reward.QuotaIdentity = user.TokengineSubject, *user.TokengineID
+			reward.QuotaSubject = *user.TokengineSubject
 		}
 		claimed := tx.Model(&reward).Where("quota_status = ?", reward.QuotaStatus).Updates(map[string]any{
 			"quota_status": QuotaProcessing, "quota_subject": reward.QuotaSubject,
-			"quota_identity": reward.QuotaIdentity, "quota_attempted_at": time.Now(), "quota_error": "",
+			"quota_attempted_at": time.Now(), "quota_error": "",
 		})
 		if claimed.Error != nil {
 			return claimed.Error
@@ -158,9 +158,6 @@ func (s *RewardQuotaService) grant(ctx context.Context, reward model.PowerLog) (
 	id, err := strconv.ParseInt(strings.TrimPrefix(reward.QuotaSubject, "u_"), 10, 64)
 	if err != nil || id <= 0 || reward.QuotaSubject != "u_"+strconv.FormatInt(id, 10) || reward.QuotaAmount <= 0 {
 		return QuotaFailed, "invalid_reward"
-	}
-	if reward.QuotaIdentity != s.oauth.IdentityKey(reward.QuotaSubject) {
-		return QuotaFailed, "identity_provider_mismatch"
 	}
 	body, _ := json.Marshal(map[string]any{"id": id, "action": "add_quota", "mode": "add", "value": reward.QuotaAmount})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.oauth.config.InternalBaseURL+"/api/user/manage", strings.NewReader(string(body)))

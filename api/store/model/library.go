@@ -14,7 +14,7 @@ type LibrarySource struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-func (LibrarySource) TableName() string { return "geekai_library_sources" }
+func (LibrarySource) TableName() string { return "library_sources" }
 
 type LibraryResource struct {
 	Id          uint      `json:"id" gorm:"primaryKey"`
@@ -28,4 +28,4 @@ type LibraryResource struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (LibraryResource) TableName() string { return "geekai_library_resources" }
+func (LibraryResource) TableName() string { return "library_resources" }

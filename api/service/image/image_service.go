@@ -255,7 +255,7 @@ func (s *Service) CheckTaskStatus() {
 					continue
 				}
 				_, err = s.ledgerService.RefundFailedJob(service.FailedJobRefund{
-					Table:   "geekai_image_jobs",
+					Table:   "image_jobs",
 					JobId:   job.Id,
 					UserId:  job.UserId,
 					Power:   job.Power,

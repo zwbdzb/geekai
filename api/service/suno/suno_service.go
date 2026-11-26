@@ -409,7 +409,7 @@ func (s *Service) SyncTaskProgress() {
 				Where("status", model.ImageStatusFailed).Where("power > ?", 0).Find(&jobs)
 			for _, job := range jobs {
 				_, err := s.ledgerService.RefundFailedJob(service.FailedJobRefund{
-					Table:   "geekai_suno_jobs",
+					Table:   "suno_jobs",
 					JobId:   job.Id,
 					UserId:  job.UserId,
 					Power:   job.Power,

@@ -13,5 +13,5 @@ type Function struct {
 }
 
 func (m *Function) TableName() string {
-	return "geekai_functions"
+	return "functions"
 }

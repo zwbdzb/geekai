@@ -27,5 +27,5 @@ type JimengJob struct {
 
 // TableName 返回数据表名称
 func (JimengJob) TableName() string {
-	return "geekai_jimeng_jobs"
+	return "jimeng_jobs"
 }

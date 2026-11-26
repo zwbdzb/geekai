@@ -20,5 +20,5 @@ type ApiKey struct {
 
 // TableName 表名
 func (m *ApiKey) TableName() string {
-	return "geekai_api_keys"
+	return "api_keys"
 }

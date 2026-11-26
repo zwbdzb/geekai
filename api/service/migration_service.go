@@ -257,27 +257,27 @@ func (s *MigrationService) fixTableConstraints() {
 		}
 	}
 
-	// === 为 geekai_users.username 补充唯一索引（根据模型 uniqueIndex 定义） ===
+	// === 为 users.username 补充唯一索引（根据模型 uniqueIndex 定义） ===
 	var usernameUniqueCount int64
 	err := s.db.Raw(`
 		SELECT COUNT(1)
 		FROM INFORMATION_SCHEMA.STATISTICS
 		WHERE TABLE_SCHEMA = ?
-		  AND TABLE_NAME = 'geekai_users'
+		  AND TABLE_NAME = 'users'
 		  AND COLUMN_NAME = 'username'
 		  AND NON_UNIQUE = 0
 	`, dbName).Scan(&usernameUniqueCount).Error
 	if err != nil {
-		logger.Errorf("检查 geekai_users.username 唯一索引失败: %v", err)
+		logger.Errorf("检查 users.username 唯一索引失败: %v", err)
 	} else if usernameUniqueCount == 0 {
 		// 索引名尽量固定，避免重复创建
-		if err := s.db.Exec("ALTER TABLE geekai_users ADD UNIQUE KEY idx_geekai_users_username (username)").Error; err != nil {
-			logger.Errorf("创建 geekai_users.username 唯一索引失败: %v", err)
+		if err := s.db.Exec("ALTER TABLE users ADD UNIQUE KEY idx_users_username (username)").Error; err != nil {
+			logger.Errorf("创建 users.username 唯一索引失败: %v", err)
 		} else {
-			logger.Info("已为 geekai_users.username 创建唯一索引 idx_geekai_users_username")
+			logger.Info("已为 users.username 创建唯一索引 idx_users_username")
 		}
 	} else {
-		logger.Info("geekai_users.username 唯一索引已存在，跳过创建")
+		logger.Info("users.username 唯一索引已存在，跳过创建")
 	}
 
 	logger.Info("关键表主键、自增和索引修复完成")
@@ -290,51 +290,51 @@ func (s *MigrationService) incrementalTableMigration() {
 
 	// ========== 字段重命名：全量迁移已添加新列，需将旧列数据拷贝到新列后删除旧列 ==========
 
-	// ChatApp(geekai_chat_roles): context_json -> system_prompt 历史数据迁移
+	// ChatApp(chat_roles): context_json -> system_prompt 历史数据迁移
 	if s.db.Migrator().HasColumn(&model.ChatApp{}, "context_json") {
 		// 将旧列 context_json 的值拷贝到 system_prompt（NULL 转为空字符串，保证 NOT NULL 约束）
 		if err := s.db.Exec(`
-			UPDATE geekai_chat_roles 
+			UPDATE chat_roles
 			SET system_prompt = IFNULL(NULLIF(TRIM(COALESCE(context_json, '')), ''), '')
 		`).Error; err != nil {
-			logger.Errorf("迁移 geekai_chat_roles.context_json -> system_prompt 失败: %v", err)
+			logger.Errorf("迁移 chat_roles.context_json -> system_prompt 失败: %v", err)
 		} else {
 			if err := s.db.Migrator().DropColumn(&model.ChatApp{}, "context_json"); err != nil {
-				logger.Errorf("删除 geekai_chat_roles.context_json 失败: %v", err)
+				logger.Errorf("删除 chat_roles.context_json 失败: %v", err)
 			} else {
-				logger.Info("geekai_chat_roles: context_json 已迁移至 system_prompt 并删除旧列")
+				logger.Info("chat_roles: context_json 已迁移至 system_prompt 并删除旧列")
 			}
 		}
 	}
 
 	// ChatApp: 将 user_id 为 NULL 的历史记录置为 0（系统内置）
 	if s.db.Migrator().HasColumn(&model.ChatApp{}, "user_id") {
-		if err := s.db.Exec(`UPDATE geekai_chat_roles SET user_id = 0 WHERE user_id IS NULL`).Error; err != nil {
-			logger.Errorf("初始化 geekai_chat_roles.user_id 失败: %v", err)
+		if err := s.db.Exec(`UPDATE chat_roles SET user_id = 0 WHERE user_id IS NULL`).Error; err != nil {
+			logger.Errorf("初始化 chat_roles.user_id 失败: %v", err)
 		}
 	}
 
-	// ChatApp(geekai_chat_roles): 删除 marker 列（应用仅通过 id 区分）
+	// ChatApp(chat_roles): 删除 marker 列（应用仅通过 id 区分）
 	var hasMarker int
-	if s.db.Raw("SELECT COUNT(1) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'geekai_chat_roles' AND COLUMN_NAME = 'marker'").Scan(&hasMarker).Error == nil && hasMarker > 0 {
+	if s.db.Raw("SELECT COUNT(1) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'chat_roles' AND COLUMN_NAME = 'marker'").Scan(&hasMarker).Error == nil && hasMarker > 0 {
 		// 先删除可能存在的唯一索引（不同版本 SQL 索引名不同）
-		for _, idxName := range []string{"marker", "idx_chatgpt_chat_roles_marker", "idx_chatgpt_chat_roles_key", "idx_geekai_chat_roles_marker"} {
-			_ = s.db.Exec(fmt.Sprintf("ALTER TABLE geekai_chat_roles DROP INDEX `%s`", idxName)).Error
+		for _, idxName := range []string{"marker", "idx_chatgpt_chat_roles_marker", "idx_chatgpt_chat_roles_key", "idx_chat_roles_marker"} {
+			_ = s.db.Exec(fmt.Sprintf("ALTER TABLE chat_roles DROP INDEX `%s`", idxName)).Error
 		}
-		if err := s.db.Exec("ALTER TABLE geekai_chat_roles DROP COLUMN marker").Error; err != nil {
-			logger.Errorf("删除 geekai_chat_roles.marker 失败: %v", err)
+		if err := s.db.Exec("ALTER TABLE chat_roles DROP COLUMN marker").Error; err != nil {
+			logger.Errorf("删除 chat_roles.marker 失败: %v", err)
 		} else {
-			logger.Info("geekai_chat_roles: 已删除 marker 列")
+			logger.Info("chat_roles: 已删除 marker 列")
 		}
 	}
 
 	// Config: config_json -> value, marker -> name
 	if s.db.Migrator().HasColumn(&model.Config{}, "config_json") {
-		s.db.Exec("UPDATE geekai_configs SET `value` = config_json WHERE config_json IS NOT NULL AND config_json != ''")
+		s.db.Exec("UPDATE configs SET `value` = config_json WHERE config_json IS NOT NULL AND config_json != ''")
 		s.db.Migrator().DropColumn(&model.Config{}, "config_json")
 	}
 	if s.db.Migrator().HasColumn(&model.Config{}, "marker") {
-		s.db.Exec("UPDATE geekai_configs SET `name` = marker WHERE marker IS NOT NULL AND marker != ''")
+		s.db.Exec("UPDATE configs SET `name` = marker WHERE marker IS NOT NULL AND marker != ''")
 		s.db.Migrator().DropColumn(&model.Config{}, "marker")
 	}
 	if s.db.Migrator().HasIndex(&model.Config{}, "idx_chatgpt_configs_key") {
@@ -346,33 +346,33 @@ func (s *MigrationService) incrementalTableMigration() {
 
 	// Order: pay_type -> channel
 	if s.db.Migrator().HasColumn(&model.Order{}, "pay_type") {
-		s.db.Exec("UPDATE geekai_orders SET channel = pay_type WHERE pay_type IS NOT NULL AND pay_type != ''")
+		s.db.Exec("UPDATE orders SET channel = pay_type WHERE pay_type IS NOT NULL AND pay_type != ''")
 		s.db.Migrator().DropColumn(&model.Order{}, "pay_type")
 	}
 
 	// JimengJob: task_params -> params
 	if s.db.Migrator().HasColumn(&model.JimengJob{}, "task_params") {
-		s.db.Exec("UPDATE geekai_jimeng_jobs SET params = task_params WHERE task_params IS NOT NULL AND task_params != ''")
+		s.db.Exec("UPDATE jimeng_jobs SET params = task_params WHERE task_params IS NOT NULL AND task_params != ''")
 		s.db.Migrator().DropColumn(&model.JimengJob{}, "task_params")
 	}
 
 	// VideoJob: task_info -> params, raw_data -> output
 	if s.db.Migrator().HasColumn(&model.VideoJob{}, "task_info") {
-		s.db.Exec("UPDATE geekai_video_jobs SET params = task_info WHERE task_info IS NOT NULL AND task_info != ''")
+		s.db.Exec("UPDATE video_jobs SET params = task_info WHERE task_info IS NOT NULL AND task_info != ''")
 		s.db.Migrator().DropColumn(&model.VideoJob{}, "task_info")
 	}
 	if s.db.Migrator().HasColumn(&model.VideoJob{}, "raw_data") {
-		s.db.Exec("UPDATE geekai_video_jobs SET `output` = raw_data WHERE raw_data IS NOT NULL AND raw_data != ''")
+		s.db.Exec("UPDATE video_jobs SET `output` = raw_data WHERE raw_data IS NOT NULL AND raw_data != ''")
 		s.db.Migrator().DropColumn(&model.VideoJob{}, "raw_data")
 	}
 
 	// SunoJob: task_info -> params, raw_data -> output
 	if s.db.Migrator().HasColumn(&model.SunoJob{}, "task_info") {
-		s.db.Exec("UPDATE geekai_suno_jobs SET params = task_info WHERE task_info IS NOT NULL AND task_info != ''")
+		s.db.Exec("UPDATE suno_jobs SET params = task_info WHERE task_info IS NOT NULL AND task_info != ''")
 		s.db.Migrator().DropColumn(&model.SunoJob{}, "task_info")
 	}
 	if s.db.Migrator().HasColumn(&model.SunoJob{}, "raw_data") {
-		s.db.Exec("UPDATE geekai_suno_jobs SET `output` = raw_data WHERE raw_data IS NOT NULL AND raw_data != ''")
+		s.db.Exec("UPDATE suno_jobs SET `output` = raw_data WHERE raw_data IS NOT NULL AND raw_data != ''")
 		s.db.Migrator().DropColumn(&model.SunoJob{}, "raw_data")
 	}
 
@@ -391,11 +391,11 @@ func (s *MigrationService) incrementalTableMigration() {
 		s.db.Migrator().DropColumn(&model.User{}, "chat_config")
 	}
 	var hasChatRolesJSON int
-	if s.db.Raw("SELECT COUNT(1) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'geekai_users' AND COLUMN_NAME = 'chat_roles_json'").Scan(&hasChatRolesJSON).Error == nil && hasChatRolesJSON > 0 {
-		if err := s.db.Exec("ALTER TABLE geekai_users DROP COLUMN chat_roles_json").Error; err != nil {
-			logger.Errorf("删除 geekai_users.chat_roles_json 失败: %v", err)
+	if s.db.Raw("SELECT COUNT(1) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'chat_roles_json'").Scan(&hasChatRolesJSON).Error == nil && hasChatRolesJSON > 0 {
+		if err := s.db.Exec("ALTER TABLE users DROP COLUMN chat_roles_json").Error; err != nil {
+			logger.Errorf("删除 users.chat_roles_json 失败: %v", err)
 		} else {
-			logger.Info("geekai_users: 已删除 chat_roles_json 列")
+			logger.Info("users: 已删除 chat_roles_json 列")
 		}
 	}
 	if s.db.Migrator().HasColumn(&model.ChatModel{}, "category") {
@@ -467,81 +467,81 @@ func (s *MigrationService) migrateTaskStatuses() {
 	}
 
 	// image_jobs：与 image_service 约定一致（失败 progress=0；下载中 progress=100）
-	if migrator.HasTable("geekai_image_jobs") && migrator.HasColumn(&model.ImageJob{}, "status") {
-		exec("geekai_image_jobs failed(101)",
-			"UPDATE `geekai_image_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
+	if migrator.HasTable("image_jobs") && migrator.HasColumn(&model.ImageJob{}, "status") {
+		exec("image_jobs failed(101)",
+			"UPDATE `image_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
 			model.ImageStatusFailed)
-		exec("geekai_image_jobs downloading(102)",
-			"UPDATE `geekai_image_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
+		exec("image_jobs downloading(102)",
+			"UPDATE `image_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
 			model.ImageStatusDownloading)
-		exec("geekai_image_jobs success(100)",
-			"UPDATE `geekai_image_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
+		exec("image_jobs success(100)",
+			"UPDATE `image_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
 			model.ImageStatusSuccess)
-		exec("geekai_image_jobs in_progress(1-99)",
-			"UPDATE `geekai_image_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
+		exec("image_jobs in_progress(1-99)",
+			"UPDATE `image_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
 			model.ImageStatusInProgress)
-		exec("geekai_image_jobs pending(0)",
-			"UPDATE `geekai_image_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
+		exec("image_jobs pending(0)",
+			"UPDATE `image_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
 			model.ImageStatusPending)
 	}
 
 	// mj_jobs：含历史 progress=-1 失败
-	if migrator.HasTable("geekai_mj_jobs") && migrator.HasColumn(&model.MidJourneyJob{}, "status") {
-		exec("geekai_mj_jobs failed(101)",
-			"UPDATE `geekai_mj_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
+	if migrator.HasTable("mj_jobs") && migrator.HasColumn(&model.MidJourneyJob{}, "status") {
+		exec("mj_jobs failed(101)",
+			"UPDATE `mj_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
 			model.ImageStatusFailed)
-		exec("geekai_mj_jobs failed(-1)",
-			"UPDATE `geekai_mj_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = -1",
+		exec("mj_jobs failed(-1)",
+			"UPDATE `mj_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = -1",
 			model.ImageStatusFailed)
-		exec("geekai_mj_jobs downloading(102)",
-			"UPDATE `geekai_mj_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
+		exec("mj_jobs downloading(102)",
+			"UPDATE `mj_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
 			model.ImageStatusDownloading)
-		exec("geekai_mj_jobs success(100)",
-			"UPDATE `geekai_mj_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
+		exec("mj_jobs success(100)",
+			"UPDATE `mj_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
 			model.ImageStatusSuccess)
-		exec("geekai_mj_jobs in_progress(1-99)",
-			"UPDATE `geekai_mj_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
+		exec("mj_jobs in_progress(1-99)",
+			"UPDATE `mj_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
 			model.ImageStatusInProgress)
-		exec("geekai_mj_jobs pending(0)",
-			"UPDATE `geekai_mj_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
+		exec("mj_jobs pending(0)",
+			"UPDATE `mj_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
 			model.ImageStatusPending)
 	}
 
 	// suno_jobs：与五态常量一致，去掉重复的 101 更新
-	if migrator.HasTable("geekai_suno_jobs") && migrator.HasColumn(&model.SunoJob{}, "status") {
-		exec("geekai_suno_jobs failed(101)",
-			"UPDATE `geekai_suno_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
+	if migrator.HasTable("suno_jobs") && migrator.HasColumn(&model.SunoJob{}, "status") {
+		exec("suno_jobs failed(101)",
+			"UPDATE `suno_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
 			model.ImageStatusFailed)
-		exec("geekai_suno_jobs downloading(102)",
-			"UPDATE `geekai_suno_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
+		exec("suno_jobs downloading(102)",
+			"UPDATE `suno_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
 			model.ImageStatusDownloading)
-		exec("geekai_suno_jobs success(100)",
-			"UPDATE `geekai_suno_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
+		exec("suno_jobs success(100)",
+			"UPDATE `suno_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
 			model.ImageStatusSuccess)
-		exec("geekai_suno_jobs in_progress(1-99)",
-			"UPDATE `geekai_suno_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
+		exec("suno_jobs in_progress(1-99)",
+			"UPDATE `suno_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
 			model.ImageStatusInProgress)
-		exec("geekai_suno_jobs pending(0)",
-			"UPDATE `geekai_suno_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
+		exec("suno_jobs pending(0)",
+			"UPDATE `suno_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
 			model.ImageStatusPending)
 	}
 
 	// video_jobs：状态字符串与 Image 五态相同
-	if migrator.HasTable("geekai_video_jobs") && migrator.HasColumn(&model.VideoJob{}, "status") {
-		exec("geekai_video_jobs failed(101)",
-			"UPDATE `geekai_video_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
+	if migrator.HasTable("video_jobs") && migrator.HasColumn(&model.VideoJob{}, "status") {
+		exec("video_jobs failed(101)",
+			"UPDATE `video_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 101",
 			types.VideoStatusFailed)
-		exec("geekai_video_jobs downloading(102)",
-			"UPDATE `geekai_video_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
+		exec("video_jobs downloading(102)",
+			"UPDATE `video_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 102",
 			types.VideoStatusDownloading)
-		exec("geekai_video_jobs success(100)",
-			"UPDATE `geekai_video_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
+		exec("video_jobs success(100)",
+			"UPDATE `video_jobs` SET `status` = ?, `progress` = 100 WHERE `progress` = 100",
 			types.VideoStatusSuccess)
-		exec("geekai_video_jobs in_progress(1-99)",
-			"UPDATE `geekai_video_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
+		exec("video_jobs in_progress(1-99)",
+			"UPDATE `video_jobs` SET `status` = ? WHERE `progress` >= 1 AND `progress` <= 99",
 			types.VideoStatusInProgress)
-		exec("geekai_video_jobs pending(0)",
-			"UPDATE `geekai_video_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
+		exec("video_jobs pending(0)",
+			"UPDATE `video_jobs` SET `status` = ?, `progress` = 0 WHERE `progress` = 0",
 			types.VideoStatusPending)
 	}
 }

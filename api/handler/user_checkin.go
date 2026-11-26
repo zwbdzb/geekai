@@ -37,15 +37,13 @@ func (h *UserHandler) TokengineCheckin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid_provider_user_id"})
 		return
 	}
-	key := h.tokengineOAuth.IdentityKey(subject)
-	if key == "" {
+	if !h.tokengineOAuth.HasValidPublicURL() {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "identity_unavailable"})
 		return
 	}
 
 	ctx := c.Request.Context()
-	var user model.User
-	err = h.DB.WithContext(ctx).Select("id", "status").Where("tokengine_id = ?", key).Take(&user).Error
+	user, err := h.findTokengineUser(ctx, subject)
 	if errors.Is(err, gorm.ErrRecordNotFound) && h.App.SysConfig.Base.EnabledRegister {
 		if h.App.SysConfig.Base.DailyPower <= 0 {
 			c.JSON(http.StatusConflict, gin.H{"error": "checkin_disabled"})
@@ -73,6 +71,11 @@ func (h *UserHandler) TokengineCheckin(c *gin.Context) {
 	case !user.Status:
 		c.JSON(http.StatusForbidden, gin.H{"error": "user_blocked"})
 		return
+	}
+	if user.Platform == "tokengine" && user.TokengineProfile == "" {
+		if err := h.fillTokengineCheckinProfile(ctx, user, subject); err != nil {
+			logger.Warnw("checkin_tokengine_profile_backfill_failed", "user_id", user.Id)
+		}
 	}
 
 	points, alreadyCheckedIn, err := h.checkIn(ctx, user.Id, true)
@@ -113,13 +116,18 @@ func (h *UserHandler) provisionTokengineCheckinUser(ctx context.Context, subject
 	if profile.Status != 1 {
 		return model.User{}, nil
 	}
+	profile.Telephone = strings.TrimSpace(profile.Telephone)
 	return h.tokengineUser(ctx, service.TokengineIdentity{Subject: subject, Phone: &profile.Telephone}, "", profile)
 }
 
-func (h *UserHandler) createTokengineCheckinUser(ctx context.Context, subject, key, mobile string, profile *service.TokengineUserProfile) (model.User, error) {
+func (h *UserHandler) createTokengineCheckinUser(ctx context.Context, subject, mobile string, profile *service.TokengineUserProfile) (model.User, error) {
 	if strings.TrimSpace(profile.Username) == "" || utf8.RuneCountInString(profile.Username) > 30 || utf8.RuneCountInString(profile.DisplayName) > 30 {
 		logger.Warnw("checkin_tokengine_profile_invalid_name")
 		return model.User{}, errCheckinIdentityUnavailable
+	}
+	snapshot, err := tokengineCheckinSnapshot(subject, profile)
+	if err != nil {
+		return model.User{}, err
 	}
 	// The legacy request carries only a subject. Provision its own account without linking it by contact or issuing a login session.
 	user, err := h.createTokengineUser(ctx, model.User{
@@ -127,14 +135,59 @@ func (h *UserHandler) createTokengineCheckinUser(ctx context.Context, subject, k
 		Nickname:         profile.DisplayName,
 		Mobile:           mobile,
 		Platform:         "tokengine",
-		TokengineID:      &key,
-		TokengineSubject: subject,
+		TokengineSubject: &subject,
+		TokengineProfile: snapshot,
 	}, "")
 	var duplicate *mysql.MySQLError
 	if errors.Is(err, gorm.ErrDuplicatedKey) || errors.As(err, &duplicate) && duplicate.Number == 1062 {
 		return model.User{}, errCheckinUsernameConflict
 	}
 	return user, err
+}
+
+func tokengineCheckinSnapshot(subject string, profile *service.TokengineUserProfile) (string, error) {
+	details, err := json.Marshal(profile)
+	if err != nil {
+		return "", err
+	}
+	snapshot, err := json.Marshal(tokengineSavedProfile{
+		TokengineIdentity: service.TokengineIdentity{
+			Subject: subject, Username: profile.Username, DisplayName: profile.DisplayName, Phone: &profile.Telephone,
+		},
+		Profile: details,
+	})
+	return string(snapshot), err
+}
+
+func (h *UserHandler) fillTokengineCheckinProfile(ctx context.Context, user model.User, subject string) error {
+	profile, err := h.tokengineOAuth.UserProfile(ctx, subject, h.App.Config.TokengineManagementToken())
+	if err != nil || profile.Status != 1 {
+		return err
+	}
+	profile.Telephone = strings.TrimSpace(profile.Telephone)
+	snapshot, err := tokengineCheckinSnapshot(subject, profile)
+	if err != nil {
+		return err
+	}
+	db := h.DB.WithContext(ctx)
+	updates := map[string]any{"tokengine_profile": snapshot}
+	if user.Mobile == "" && registrationMobilePattern.MatchString(profile.Telephone) {
+		unlock, err := h.lockMobile(ctx, profile.Telephone)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		var occupied int64
+		if err := db.Model(&model.User{}).Where("mobile = ? AND id <> ?", profile.Telephone, user.Id).Count(&occupied).Error; err != nil {
+			return err
+		}
+		if occupied == 0 {
+			updates["mobile"] = gorm.Expr("COALESCE(NULLIF(mobile, ''), ?)", profile.Telephone)
+		}
+	}
+	return db.Model(&user).
+		Where("tokengine_subject = ? AND status = TRUE AND (tokengine_profile IS NULL OR tokengine_profile = '')", subject).
+		Updates(updates).Error
 }
 
 func (h *UserHandler) checkIn(ctx context.Context, userID uint, desktopCheckin bool) (points int, alreadyCheckedIn bool, err error) {

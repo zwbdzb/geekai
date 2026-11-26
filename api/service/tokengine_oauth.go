@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"geekai/core/types"
@@ -101,8 +100,7 @@ func (s *TokengineOAuth) validateProvider() error {
 	if !s.config.Enabled {
 		return errors.New("Token 平台登录未启用")
 	}
-	base, err := oauthConfigURL(s.config.BaseURL)
-	if err != nil || base.Path != "" {
+	if !s.HasValidPublicURL() {
 		return errors.New("Token 平台地址配置不正确")
 	}
 	internal, err := parseOAuthURL(s.config.InternalBaseURL)
@@ -158,22 +156,9 @@ func (s *TokengineOAuth) AuthorizeURL(state, verifier string) (string, error) {
 	return s.config.BaseURL + "/oauth/authorize?" + query.Encode(), nil
 }
 
-// Include the provider origin so test and production identities cannot share an account.
-func (s *TokengineOAuth) IdentityKey(subject string) string {
+func (s *TokengineOAuth) HasValidPublicURL() bool {
 	u, err := oauthConfigURL(s.config.BaseURL)
-	if err != nil || u.Path != "" {
-		return ""
-	}
-	u.Scheme = strings.ToLower(u.Scheme)
-	u.Host = strings.ToLower(u.Host)
-	if u.Scheme == "https" && u.Port() == "443" {
-		u.Host = u.Hostname()
-		if strings.Contains(u.Host, ":") {
-			u.Host = "[" + u.Host + "]"
-		}
-	}
-	digest := sha256.Sum256([]byte(u.String() + "\x00" + subject))
-	return hex.EncodeToString(digest[:])
+	return err == nil && u.Path == ""
 }
 
 func (s *TokengineOAuth) Exchange(ctx context.Context, code, verifier string) (TokengineIdentity, error) {

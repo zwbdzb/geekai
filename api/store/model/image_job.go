@@ -19,5 +19,5 @@ type ImageJob struct {
 }
 
 func (m *ImageJob) TableName() string {
-	return "geekai_image_jobs"
+	return "image_jobs"
 }

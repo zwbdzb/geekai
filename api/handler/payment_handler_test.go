@@ -46,7 +46,7 @@ func newPaymentTestHandler(t *testing.T) (*PaymentHandler, sqlmock.Sqlmock) {
 
 // expectPendingOrder 期望一次"按订单号查订单"，返回待支付订单
 func expectPendingOrder(mock sqlmock.Sqlmock, amount float64) {
-	mock.ExpectQuery("SELECT .*geekai_orders").
+	mock.ExpectQuery("SELECT .*orders").
 		WithArgs("ORDER-2026").
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "user_id", "product_id", "username", "order_no", "subject", "amount", "status", "remark", "channel", "pay_way",
@@ -56,7 +56,7 @@ func expectPendingOrder(mock sqlmock.Sqlmock, amount float64) {
 		))
 }
 
-const orderPaidGuardSQL = "UPDATE `geekai_orders` SET .* WHERE id = \\? AND status <> \\?"
+const orderPaidGuardSQL = "UPDATE `orders` SET .* WHERE id = \\? AND status <> \\?"
 
 // TestPaySuccessGrantsOnceOnFirstCallback 首次回调：订单置成功 + 发积分 + 销量全部在同一事务
 func TestPaySuccessGrantsOnceOnFirstCallback(t *testing.T) {
@@ -66,12 +66,12 @@ func TestPaySuccessGrantsOnceOnFirstCallback(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec(orderPaidGuardSQL).WillReturnResult(sqlmock.NewResult(0, 1))
 	// 发积分：行锁读用户 -> 插幂等日志 -> 加余额
-	mock.ExpectQuery("SELECT .*geekai_users").WithArgs(7).
+	mock.ExpectQuery("SELECT .*users").WithArgs(7).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "username", "power"}).AddRow(7, "alice", 100))
-	mock.ExpectExec("INSERT INTO `geekai_power_logs`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("UPDATE `geekai_users` SET `power`=power \\+ \\?").WithArgs(500, 7).
+	mock.ExpectExec("INSERT INTO `power_logs`").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE `users` SET `power`=power \\+ \\?").WithArgs(500, 7).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec("UPDATE `geekai_products` SET `sales`=sales \\+ \\?").
+	mock.ExpectExec("UPDATE `products` SET `sales`=sales \\+ \\?").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
@@ -100,7 +100,7 @@ func TestPaySuccessSkipsWhenGuardMisses(t *testing.T) {
 	if err := h.paySuccess(info); err != nil {
 		t.Fatalf("重复回调不应报错，实际 %v", err)
 	}
-	// ExpectationsWereMet 同时证明：整个过程没有任何 INSERT geekai_power_logs、没有任何 UPDATE geekai_users
+	// ExpectationsWereMet 同时证明：整个过程没有任何 INSERT power_logs、没有任何 UPDATE users
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}

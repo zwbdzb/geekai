@@ -358,10 +358,10 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 		}
 		// 第三方登录用户密码保持空值，仅能通过 OAuth 方式登录
 	} else {
-		if user.Nickname == "" && user.TokengineSubject == "" {
+		if user.Nickname == "" && user.TokengineSubject == nil {
 			user.Nickname = fmt.Sprintf("用户@%d", utils.RandomNumber(6))
 		}
-		if user.Username == "" || (user.Password == "" && user.Mobile == "" && (user.TokengineID == nil || *user.TokengineID == "")) {
+		if user.Username == "" || (user.Password == "" && user.Mobile == "" && user.TokengineSubject == nil) {
 			return user, fmt.Errorf("用户名和手机号不能为空")
 		}
 	}
@@ -372,10 +372,7 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 	if user.Password != "" {
 		user.Password = utils.GenPassword(user.Password, salt)
 	}
-	// 如果未设置头像，则使用默认头像
-	if user.Avatar == "" {
-		user.Avatar = "/images/avatar/user.png"
-	}
+	//移除默认头像
 	user.Status = true
 	user.ChatConfig = "{}"
 	user.ChatModels = "{}"

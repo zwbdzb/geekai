@@ -34,14 +34,14 @@ data:
 
     [OSS.Local]
       BasePath = "./static/upload"
-      BaseURL = "https://thinkbuddy-t.hanyoai.com/static/upload"
+      BaseURL = "https://thinkbuddy.hanyoai.com/static/upload"
 
     [TokengineOAuth]
       Enabled = true
       BaseURL = "https://tokengine.hanyoai.com"
       InternalBaseURL = "http://new-api.tokengine.svc.cluster.local:3000"
       ClientID = "thinkbuddy-web"
-      RedirectURL = "https://thinkbuddy-t.hanyoai.com/api/user/login/tokengine/callback"
+      RedirectURL = "https://thinkbuddy.hanyoai.com/api/user/login/tokengine/callback"
 
   nginx.conf: |
     worker_processes auto;

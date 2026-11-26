@@ -94,9 +94,9 @@
 
             <div class="text-sm leading-6" style="color: var(--login-text-color)">
               <el-checkbox v-model="accountAgreeChecked">我已阅读并同意</el-checkbox>
-              <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openAgreement">《用户协议》</a>
+              <a href="/agreement" target="_blank" rel="noopener noreferrer" class="login-link whitespace-nowrap">《用户协议》</a>
               和
-              <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openPrivacy">《隐私政策》</a>
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" class="login-link whitespace-nowrap">《隐私政策》</a>
             </div>
           </el-form>
         </div>
@@ -144,9 +144,9 @@
             </div>
             <div class="text-sm leading-6" style="color: var(--login-text-color)">
               <el-checkbox v-model="mobileAgreeChecked">我已阅读并同意</el-checkbox>
-              <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openAgreement">《用户协议》</a>
+              <a href="/agreement" target="_blank" rel="noopener noreferrer" class="login-link whitespace-nowrap">《用户协议》</a>
               和
-              <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openPrivacy">《隐私政策》</a>
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" class="login-link whitespace-nowrap">《隐私政策》</a>
             </div>
             <button
               class="login-submit"
@@ -207,9 +207,9 @@
           </button>
           <div class="mt-4 text-left text-sm leading-6" style="color: var(--login-text-color)">
             <el-checkbox v-model="tokengineAgreeChecked">我已阅读并同意</el-checkbox>
-            <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openAgreement">《用户协议》</a>
+            <a href="/agreement" target="_blank" rel="noopener noreferrer" class="login-link whitespace-nowrap">《用户协议》</a>
             和
-            <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openPrivacy">《隐私政策》</a>
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" class="login-link whitespace-nowrap">《隐私政策》</a>
           </div>
           <p v-if="!tokengineEnabled" class="mt-3 text-sm" style="color: var(--login-text-color)">Tokengine 登录暂未开放</p>
         </div>
@@ -356,14 +356,10 @@
         </div>
 
         <div class="block text-sm">
-          <el-checkbox v-model="agreeChecked">
-            我已阅读并同意
-            <a href="javascript:void(0)" class="login-link" @click="openAgreement"
-              >《用户协议》</a
-            >
-            和
-            <a href="javascript:void(0)" class="login-link" @click="openPrivacy">《隐私政策》</a>
-          </el-checkbox>
+          <el-checkbox v-model="agreeChecked">我已阅读并同意</el-checkbox>
+          <a href="/agreement" target="_blank" rel="noopener noreferrer" class="login-link">《用户协议》</a>
+          和
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" class="login-link">《隐私政策》</a>
         </div>
 
         <div class="w-full">
@@ -417,14 +413,6 @@
     <captcha v-if="enableCaptcha" :type="captchaType" @success="submit" ref="captchaRef" />
 
     <reset-pass @hide="showResetPass = false" :show="showResetPass" />
-
-    <el-dialog v-model="showAgreement" title="用户协议" class="login-policy-dialog" :append-to-body="true">
-      <div class="prose" v-html="agreementHtml"></div>
-    </el-dialog>
-
-    <el-dialog v-model="showPrivacy" title="隐私政策" class="login-policy-dialog" :append-to-body="true">
-      <div class="prose" v-html="privacyHtml"></div>
-    </el-dialog>
   </div>
 </template>
 
@@ -440,7 +428,6 @@ import { safeRedirect } from '@/utils/redirect'
 import { validateMobile } from '@/utils/validate'
 import { Checked, Iphone, Key, Loading, Lock, Message, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { marked } from 'marked'
 import QRCode from 'qrcode'
 import { isWechat } from '@/utils/libs'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -528,10 +515,6 @@ const mobileLoginButtonText = computed(() => {
   return enableRegister.value ? '登录 / 注册' : '登录'
 })
 const agreeChecked = ref(false)
-const showAgreement = ref(false)
-const showPrivacy = ref(false)
-const agreementHtml = ref('')
-const privacyHtml = ref('')
 
 const handleLoginSuccess = (res) => {
   setUserToken(res.data.token)
@@ -829,34 +812,6 @@ const doRegister = (verifyData) => {
     .finally(() => {
       loading.value = false
     })
-}
-
-// 打开并加载协议
-const openAgreement = () => {
-  if (!agreementHtml.value) {
-    httpGet('/api/config/get?key=agreement')
-      .then((res) => {
-        agreementHtml.value = marked.parse(res.data?.content || '')
-        showAgreement.value = true
-      })
-      .catch((e) => ElMessage.error('加载用户协议失败：' + e.message))
-  } else {
-    showAgreement.value = true
-  }
-}
-
-// 打开并加载隐私政策
-const openPrivacy = () => {
-  if (!privacyHtml.value) {
-    httpGet('/api/config/get?key=privacy')
-      .then((res) => {
-        privacyHtml.value = marked.parse(res.data?.content || '')
-        showPrivacy.value = true
-      })
-      .catch((e) => ElMessage.error('加载隐私政策失败：' + e.message))
-  } else {
-    showPrivacy.value = true
-  }
 }
 
 // 组件卸载时清除定时器

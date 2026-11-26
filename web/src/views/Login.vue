@@ -120,7 +120,6 @@ onMounted(async () => {
 
 <style scoped>
 .login-page,
-:global(.login-policy-dialog),
 :global(.reset-pass-dialog) {
   --el-color-primary: var(--login-link-color);
   --el-color-primary-light-3: var(--login-link-color);
@@ -248,15 +247,10 @@ onMounted(async () => {
   text-align: center;
 }
 
-:global(.login-policy-dialog),
 :global(.reset-pass-dialog) {
   max-width: calc(100vw - 32px);
   border: 1px solid var(--login-card-border);
   border-radius: 12px;
-}
-
-:global(.login-policy-dialog) {
-  width: 640px;
 }
 
 @media (max-width: 480px) {

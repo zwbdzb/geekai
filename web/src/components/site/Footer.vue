@@ -36,8 +36,8 @@
         <div>
           <h4 class="text-xs font-semibold text-on-dark uppercase tracking-wider mb-3">{{ t('footer.col_legal') }}</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="#" class="text-on-dark-soft hover:text-on-dark transition">{{ t('footer.privacy') }}</a></li>
-            <li><a href="#" class="text-on-dark-soft hover:text-on-dark transition">{{ t('footer.terms') }}</a></li>
+            <li><a href="/privacy" target="_blank" rel="noopener noreferrer" class="text-on-dark-soft hover:text-on-dark transition">{{ t('footer.privacy') }}</a></li>
+            <li><a href="/agreement" target="_blank" rel="noopener noreferrer" class="text-on-dark-soft hover:text-on-dark transition">{{ t('footer.terms') }}</a></li>
           </ul>
         </div>
       </div>

@@ -200,11 +200,17 @@
           <button
             type="button"
             class="login-submit"
-            :disabled="!tokengineEnabled"
+            :disabled="!tokengineEnabled || !tokengineAgreeChecked"
             @click="startTokengineLogin"
           >
             Tokengine
           </button>
+          <div class="mt-4 text-left text-sm leading-6" style="color: var(--login-text-color)">
+            <el-checkbox v-model="tokengineAgreeChecked">我已阅读并同意</el-checkbox>
+            <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openAgreement">《用户协议》</a>
+            和
+            <a href="javascript:void(0)" class="login-link whitespace-nowrap" @click="openPrivacy">《隐私政策》</a>
+          </div>
           <p v-if="!tokengineEnabled" class="mt-3 text-sm" style="color: var(--login-text-color)">Tokengine 登录暂未开放</p>
         </div>
 
@@ -489,6 +495,7 @@ const mobileLoginData = ref({ mobile: '', code: '' })
 const mobileAgreeChecked = ref(false)
 const accountAgreeChecked = ref(false)
 const tokengineEnabled = ref(false)
+const tokengineAgreeChecked = ref(false)
 
 const startTokengineLogin = () => {
   const query = new URLSearchParams({
@@ -882,6 +889,11 @@ onUnmounted(clearWechatTimers)
 }
 
 .login-dialog {
+  /* 勾选后保持正文色，避免 Element Plus 默认把勾选项文字染成主题主色 */
+  .el-checkbox {
+    --el-checkbox-checked-text-color: var(--login-text-color);
+  }
+
   .login-loading {
     display: flex;
     flex-direction: column;

@@ -278,6 +278,18 @@ const routes = [
         component: () => import('@/views/site/InvitePage.vue'),
       },
       {
+        path: 'agreement',
+        name: 'site-agreement',
+        meta: { title: '用户服务协议' },
+        component: () => import('@/views/site/PolicyPage.vue'),
+      },
+      {
+        path: 'privacy',
+        name: 'site-privacy',
+        meta: { title: '隐私政策' },
+        component: () => import('@/views/site/PolicyPage.vue'),
+      },
+      {
         path: 'pricing',
         name: 'site-pricing',
         component: () => import('@/views/site/PricingPage.vue'),

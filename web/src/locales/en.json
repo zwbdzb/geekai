@@ -232,6 +232,14 @@
     "terms": "Terms of Service",
     "copyright": "© 2026 ThinkBuddy. Powered by ThinkBuddy (hanyoai)."
   },
+  "policy": {
+    "agreement_title": "Terms of Service",
+    "privacy_title": "Privacy Policy",
+    "loading": "Loading…",
+    "load_failed": "Failed to load, please try again later",
+    "retry": "Retry",
+    "empty": "No content configured yet, please contact the administrator."
+  },
   "invite": {
     "title": "Invite Friends, Learn Together",
     "subtitle": "You both get {points} credits",

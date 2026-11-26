@@ -160,6 +160,15 @@ func (s *TokengineOAuth) AuthorizeURL(state, verifier string) (string, error) {
 
 // Include the provider origin so test and production identities cannot share an account.
 func (s *TokengineOAuth) IdentityKey(subject string) string {
+	origin := s.identityOrigin()
+	if origin == "" {
+		return ""
+	}
+	digest := sha256.Sum256([]byte(origin + "\x00" + subject))
+	return hex.EncodeToString(digest[:])
+}
+
+func (s *TokengineOAuth) identityOrigin() string {
 	u, err := oauthConfigURL(s.config.BaseURL)
 	if err != nil || u.Path != "" {
 		return ""
@@ -172,8 +181,7 @@ func (s *TokengineOAuth) IdentityKey(subject string) string {
 			u.Host = "[" + u.Host + "]"
 		}
 	}
-	digest := sha256.Sum256([]byte(u.String() + "\x00" + subject))
-	return hex.EncodeToString(digest[:])
+	return u.String()
 }
 
 func (s *TokengineOAuth) Exchange(ctx context.Context, code, verifier string) (TokengineIdentity, error) {

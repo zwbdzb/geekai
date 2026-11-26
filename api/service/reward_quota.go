@@ -26,6 +26,11 @@ const (
 	QuotaUnknown    = "unknown"
 )
 
+const (
+	quotaProviderMismatch = "identity_provider_mismatch"
+	quotaIdentityMatches  = "CAST(quota_identity AS BINARY) = SHA2(CONCAT(?, CHAR(0), quota_subject), 256)"
+)
+
 func prepareRewardQuota(tx *gorm.DB, user model.User, entry *model.PowerLog) error {
 	if entry.Amount <= 0 || (entry.Type != types.PowerSignIn && entry.Type != types.PowerInvite) {
 		return nil
@@ -99,17 +104,23 @@ func (s *RewardQuotaService) processOne(ctx context.Context) error {
 	if s.Validate() != nil {
 		return gorm.ErrRecordNotFound
 	}
+	origin := s.oauth.identityOrigin()
 	// An interrupted request may have reached the provider; never automatically resend it.
 	if err := s.db.WithContext(ctx).Model(&model.PowerLog{}).
 		Where("quota_status = ? AND quota_attempted_at < ?", QuotaProcessing, time.Now().Add(-time.Minute)).
+		Where(quotaIdentityMatches, origin).
 		Updates(map[string]any{"quota_status": QuotaUnknown, "quota_error": "grant_interrupted"}).Error; err != nil {
 		return err
 	}
 	var reward model.PowerLog
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		bound := tx.Model(&model.User{}).Select("id").Where("tokengine_subject <> '' AND tokengine_id IS NOT NULL AND tokengine_id <> ''")
+		bound := tx.Model(&model.User{}).Select("id").
+			Where("tokengine_subject <> '' AND tokengine_id IS NOT NULL").
+			Where("CAST(tokengine_id AS BINARY) = SHA2(CONCAT(?, CHAR(0), tokengine_subject), 256)", origin)
+		// A provider mismatch was recorded before the HTTP request, so the correct worker can resume it safely.
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("quota_status = ? OR (quota_status = ? AND user_id IN (?))", QuotaPending, QuotaWaiting, bound).
+			Where("((quota_status = ? OR (quota_status = ? AND quota_error = ?)) AND "+quotaIdentityMatches+
+				") OR (quota_status = ? AND user_id IN (?))", QuotaPending, QuotaFailed, quotaProviderMismatch, origin, QuotaWaiting, bound).
 			Order("id ASC").First(&reward).Error; err != nil {
 			return err
 		}
@@ -160,7 +171,7 @@ func (s *RewardQuotaService) grant(ctx context.Context, reward model.PowerLog) (
 		return QuotaFailed, "invalid_reward"
 	}
 	if reward.QuotaIdentity != s.oauth.IdentityKey(reward.QuotaSubject) {
-		return QuotaFailed, "identity_provider_mismatch"
+		return QuotaFailed, quotaProviderMismatch
 	}
 	body, _ := json.Marshal(map[string]any{"id": id, "action": "add_quota", "mode": "add", "value": reward.QuotaAmount})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.oauth.config.InternalBaseURL+"/api/user/manage", strings.NewReader(string(body)))

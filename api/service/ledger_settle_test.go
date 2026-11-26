@@ -5,7 +5,7 @@ package service
 // *
 // * 断言的核心事实：同一笔任务被扫描第二次时，
 // * 抢占式 UPDATE 命中 0 行 -> 直接返回 (false, nil)，
-// * 事务里不会出现任何 INSERT geekai_power_logs / UPDATE geekai_users，
+// * 事务里不会出现任何 INSERT power_logs / UPDATE users，
 // * 也就是用户余额一分钱都没变。
 // * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -17,11 +17,11 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-const jobClaimSQL = "UPDATE `geekai_mj_jobs` SET `power`=\\? WHERE id = \\? AND power > 0"
+const jobClaimSQL = "UPDATE `mj_jobs` SET `power`=\\? WHERE id = \\? AND power > 0"
 
 func mjRefund() FailedJobRefund {
 	return FailedJobRefund{
-		Table:   "geekai_mj_jobs",
+		Table:   "mj_jobs",
 		JobId:   42,
 		UserId:  7,
 		Power:   3,

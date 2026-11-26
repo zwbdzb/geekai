@@ -31,5 +31,5 @@ type SunoJob struct {
 }
 
 func (m *SunoJob) TableName() string {
-	return "geekai_suno_jobs"
+	return "suno_jobs"
 }

@@ -529,7 +529,7 @@ func (s *Service) pollTaskStatus() {
 		s.db.Where("status = ?", types.JMTaskStatusFailed).Where("power > ?", 0).Find(&jobs)
 		for _, job := range jobs {
 			_, err := s.ledgerService.RefundFailedJob(service.FailedJobRefund{
-				Table:   "geekai_jimeng_jobs",
+				Table:   "jimeng_jobs",
 				JobId:   job.Id,
 				UserId:  job.UserId,
 				Power:   job.Power,

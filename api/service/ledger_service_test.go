@@ -47,10 +47,10 @@ func dupKeyErr(ref string) error {
 }
 
 const (
-	userSelectSQL = "SELECT .*geekai_users"
-	deductSQL     = "UPDATE `geekai_users` SET `power`=power - \\? WHERE id = \\? AND power >= \\?"
-	creditSQL     = "UPDATE `geekai_users` SET `power`=power \\+ \\? WHERE id = \\?"
-	logInsertSQL  = "INSERT INTO `geekai_power_logs`"
+	userSelectSQL = "SELECT .*users"
+	deductSQL     = "UPDATE `users` SET `power`=power - \\? WHERE id = \\? AND power >= \\?"
+	creditSQL     = "UPDATE `users` SET `power`=power \\+ \\? WHERE id = \\?"
+	logInsertSQL  = "INSERT INTO `power_logs`"
 )
 
 // TestLedgerRejectsNilTx 账本绝不允许脱离事务执行
@@ -245,7 +245,7 @@ func TestLedgerRefundIdempotent(t *testing.T) {
 	if refunded {
 		t.Fatal("重复退款必须返回 false（说明本次跳过，余额不变）")
 	}
-	// ExpectationsWereMet 同时证明了第二次事务里没有出现过任何 UPDATE geekai_users
+	// ExpectationsWereMet 同时证明了第二次事务里没有出现过任何 UPDATE users
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +324,7 @@ func TestLedgerSignInGrantsQuotaOnceAcrossMigration(t *testing.T) {
 					AddRow(7, "alice", 10, "u_1"))
 			subject := ""
 			if tc.amount > 0 {
-				mock.ExpectQuery("SELECT .*geekai_configs").WithArgs(types.ConfigKeyRewardQuota).
+				mock.ExpectQuery("SELECT .*configs").WithArgs(types.ConfigKeyRewardQuota).
 					WillReturnRows(sqlmock.NewRows([]string{"name", "value"}).
 						AddRow(types.ConfigKeyRewardQuota, `{"enabled":true,"quota_per_point":100}`))
 				subject = "u_1"
@@ -334,7 +334,7 @@ func TestLedgerSignInGrantsQuotaOnceAcrossMigration(t *testing.T) {
 				ref.Type, ref.ID, sqlmock.AnyArg(), tc.quota, tc.status, subject, "", nil, key,
 			)
 			if tc.duplicate {
-				insert.WillReturnError(errors.New("Error 1062: Duplicate entry for key 'idx_geekai_power_logs_reward_key'"))
+				insert.WillReturnError(errors.New("Error 1062: Duplicate entry for key 'idx_power_logs_reward_key'"))
 			} else {
 				insert.WillReturnResult(sqlmock.NewResult(1, 1))
 				if tc.amount > 0 {

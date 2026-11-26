@@ -13,5 +13,5 @@ type AppType struct {
 
 // TableName 表名
 func (m *AppType) TableName() string {
-	return "geekai_app_types"
+	return "app_types"
 }

@@ -30,7 +30,7 @@ var ErrLedgerNotReady = errors.New("账本服务未初始化")
 
 // FailedJobRefund 描述一笔待退还的失败任务。
 //
-// Table 是任务表名（如 geekai_mj_jobs），各业务包自己填自己的表，
+// Table 是任务表名（如 mj_jobs），各业务包自己填自己的表，
 // 这样 settle 逻辑可以通用，且不会出现 service/mj 反向 import service/image 的循环依赖。
 type FailedJobRefund struct {
 	Table   string // 任务表名

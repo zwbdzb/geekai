@@ -38,14 +38,14 @@ func TestDecreasePowerAtomicGuardAndRollback(t *testing.T) {
 			if failure == "insufficient" {
 				rows = 0
 			}
-			mock.ExpectExec("UPDATE `geekai_users` SET `power`=power - \\? WHERE id = \\? AND power >= \\?").WithArgs(2, 7, 2).WillReturnResult(sqlmock.NewResult(0, rows))
+			mock.ExpectExec("UPDATE `users` SET `power`=power - \\? WHERE id = \\? AND power >= \\?").WithArgs(2, 7, 2).WillReturnResult(sqlmock.NewResult(0, rows))
 			if failure != "insufficient" {
-				query := mock.ExpectQuery("SELECT .*geekai_users").WithArgs(7)
+				query := mock.ExpectQuery("SELECT .*users").WithArgs(7)
 				if failure == "read" {
 					query.WillReturnError(errors.New("read failed"))
 				} else {
 					query.WillReturnRows(sqlmock.NewRows([]string{"id", "username", "power"}).AddRow(7, "alice", 8))
-					insert := mock.ExpectExec("INSERT INTO `geekai_power_logs`")
+					insert := mock.ExpectExec("INSERT INTO `power_logs`")
 					if failure == "log" {
 						insert.WillReturnError(errors.New("log failed"))
 					} else {

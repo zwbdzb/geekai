@@ -13,5 +13,5 @@ type Moderation struct {
 }
 
 func (m *Moderation) TableName() string {
-	return "geekai_moderation"
+	return "moderation"
 }

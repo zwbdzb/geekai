@@ -372,10 +372,7 @@ func (h *UserHandler) createNewUser(user model.User, code string) (model.User, e
 	if user.Password != "" {
 		user.Password = utils.GenPassword(user.Password, salt)
 	}
-	// 如果未设置头像，则使用默认头像
-	if user.Avatar == "" {
-		user.Avatar = "/images/avatar/user.png"
-	}
+	//移除默认头像
 	user.Status = true
 	user.ChatConfig = "{}"
 	user.ChatModels = "{}"
